@@ -142,3 +142,10 @@
   background-color: var(--primary);
   border-radius: 9999px;
 }
+
+/* Force-close the nav mega-menu right after a panel link is clicked, see
+   components/NavAutoClose.tsx for why this can't be done with :hover alone. */
+[data-nav-suppressed] .nav-panel {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}

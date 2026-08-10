@@ -140,6 +140,16 @@ export async function getProducts(
   return { products: (data ?? []) as unknown as ProductWithRelations[], count: count ?? 0 };
 }
 
+// Used by checkout to recompute order totals server-side from current DB
+// prices — never trust a price the client's cart sends us.
+export async function getProductsByIds(ids: string[]): Promise<ProductWithRelations[]> {
+  if (ids.length === 0) return [];
+  const supabase = createSupabaseClient();
+  const { data, error } = await supabase.from("products").select(PRODUCT_SELECT).in("id", ids);
+  if (error) throw error;
+  return (data ?? []) as unknown as ProductWithRelations[];
+}
+
 export async function getProductBySlug(slug: string): Promise<ProductWithRelations | null> {
   const supabase = createSupabaseClient();
   const { data, error } = await supabase.from("products").select(PRODUCT_SELECT).eq("slug", slug).maybeSingle();

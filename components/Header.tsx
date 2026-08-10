@@ -3,6 +3,8 @@ import Image from "next/image";
 import { Suspense } from "react";
 import { ChevronDown } from "lucide-react";
 import { getBrands, getCategories, getCategoryMenuData, getRefrigeratorSizeFacets } from "@/lib/data/products";
+import CartBadge from "./CartBadge";
+import NavAutoClose from "./NavAutoClose";
 import SearchBar from "./SearchBar";
 
 const PRIORITY_CATEGORY_SLUGS = ["tvs", "refrigerators", "freezers", "acs", "washing-machines"];
@@ -11,7 +13,7 @@ const triggerClass =
   "flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-sm font-medium text-foreground/80 outline-none hover:bg-muted hover:text-foreground group-hover/item:bg-muted group-hover/item:text-foreground";
 const chevronClass = "size-3.5 text-muted-foreground transition-transform group-hover/item:rotate-180";
 const panelWrapClass =
-  "invisible absolute inset-x-0 top-full z-50 opacity-0 transition-opacity duration-150 group-hover/item:visible group-hover/item:opacity-100 group-focus-within/item:visible group-focus-within/item:opacity-100";
+  "nav-panel invisible absolute inset-x-0 top-full z-50 opacity-0 transition-opacity duration-150 group-hover/item:visible group-hover/item:opacity-100 group-focus-within/item:visible group-focus-within/item:opacity-100";
 const panelClass = "border-t bg-background shadow-lg";
 const panelInnerClass = "mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8";
 const linkClass = "block rounded-md px-2 py-1 text-sm text-foreground/80 hover:bg-muted hover:text-foreground";
@@ -50,6 +52,7 @@ export default async function Header() {
         >
           All products
         </Link>
+        <CartBadge />
       </div>
 
       {/* Row 2: category + brand navigation. Every dropdown panel is
@@ -57,6 +60,7 @@ export default async function Header() {
           spans the full nav width no matter which trigger opened it. */}
       <div className="border-t">
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <NavAutoClose>
           <nav className="flex flex-wrap items-center gap-1 py-1">
             {priorityMenus.map(({ category, brands: categoryBrands, thumbnail, sizes }) => (
               <div key={category.id} className="group/item">
@@ -159,6 +163,7 @@ export default async function Header() {
               </div>
             </div>
           </nav>
+          </NavAutoClose>
         </div>
       </div>
     </header>

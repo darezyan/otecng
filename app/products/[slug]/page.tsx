@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductBySlug, getRelatedProducts } from "@/lib/data/products";
 import { formatNaira } from "@/lib/format";
+import AddToCartButtons from "@/components/AddToCartButtons";
 import ImageGallery from "@/components/ImageGallery";
 import ProductGrid from "@/components/ProductGrid";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +14,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!product) notFound();
 
   const related = await getRelatedProducts(product.category_id, product.id, 4);
+  const primaryImage = product.product_images.find((img) => img.is_primary) ?? product.product_images[0] ?? null;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
@@ -33,6 +35,15 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <span className="text-xs font-semibold tracking-wide text-primary uppercase">{product.brand.name}</span>
           <h1 className="mt-2 text-2xl font-bold text-foreground">{product.name}</h1>
           <p className="mt-4 text-3xl font-bold text-foreground">{formatNaira(product.price)}</p>
+
+          <AddToCartButtons
+            productId={product.id}
+            slug={product.slug}
+            name={product.name}
+            price={product.price}
+            image={primaryImage?.url ?? null}
+            brandName={product.brand.name}
+          />
 
           {product.description && (
             <div className="mt-8">

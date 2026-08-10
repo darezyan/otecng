@@ -20,10 +20,11 @@ retail sites and re-hosted in our own Supabase Storage:
   **only their freezers** (that's the one brand where scope is
   freezers-only — everyone else is "all categories").
 
-The site is a catalog/browsing experience only: product listing, filters,
-search, product detail pages with image galleries. **No cart, checkout,
-payments, or user accounts** — that was deliberately scoped out and would be
-the natural next phase.
+Beyond browsing (listing, filters, search, product detail pages with image
+galleries), it now has **real ecommerce**: Add to Cart, a Buy Now shortcut,
+and actual payment collection via Paystack. **Still no user accounts** — that
+was a deliberate choice (see the Cart/checkout section below), not an
+oversight.
 
 ## Tech stack
 
@@ -35,15 +36,18 @@ the natural next phase.
   under the hood, not Radix. Components take a `render={<Link .../>}` prop
   for polymorphism, not `asChild`. Check `components/ui/*.tsx` before
   assuming Radix conventions.
-- **Supabase**: Postgres for data, Storage for images, RLS locked to
-  public-read-only (writes only via the service-role key, used only by the
-  import script, never shipped to the client)
+- **Supabase**: Postgres for data, Storage for images. Catalog tables
+  (`brands`/`categories`/`products`/`product_images`) are RLS public-read-
+  only; order tables (`orders`/`order_items`) have RLS with **no** public
+  policies at all. All writes — catalog (import script) and orders (checkout
+  API) — go through the service-role key server-side, never shipped to the
+  client.
 - Fonts: **Inter** (body) + **Plus Jakarta Sans** (headings, `font-heading`
   utility), both via `next/font/google`
 
 ## Database schema
 
-Four tables, see `supabase/migrations/0001_init.sql`:
+Catalog — four tables, see `supabase/migrations/0001_init.sql`:
 - `brands` (id, name, slug, logo_url)
 - `categories` (id, name, slug) — created on demand by the import script,
   not hardcoded
@@ -53,7 +57,20 @@ Four tables, see `supabase/migrations/0001_init.sql`:
   to shoppers
 - `product_images` (id, product_id, url, position, is_primary)
 
-RLS: anon key can `SELECT` on all four tables, cannot write. Verified.
+RLS: anon key can `SELECT` on all four catalog tables, cannot write. Verified.
+
+Orders — two more tables, `supabase/migrations/0002_orders.sql`:
+- `orders` (id, status, paystack_reference, total, currency, customer_*,
+  delivery_*, paid_at, created_at) — guest checkout, no `user_id`
+- `order_items` (id, order_id, product_id, product_name, product_price, qty)
+  — `product_name`/`product_price` are snapshots at order time
+
+RLS enabled on both, **zero policies** — not even public read. Everything
+goes through the service-role key server-side (see the Cart/checkout section
+below). Applied manually via the Supabase SQL editor, not the CLI — this
+machine's `supabase` CLI login doesn't have access to the otecng project
+(shows up in `supabase link` as a 403), so future schema changes here will
+need the same manual-paste-into-SQL-editor approach unless that's fixed.
 
 ## The import pipeline (`scripts/import/`)
 
@@ -130,6 +147,18 @@ the same upload logic (see conversation history / `storage.ts`).
   priority category (TVs, Refrigerators, Freezers, ACs, Washing Machines)
   gets its own dropdown with a representative product photo + "Shop by
   brand" links; Refrigerators additionally gets a "By size" column.
+  **`components/NavAutoClose.tsx`** fixes a follow-on bug: clicking a link
+  inside an open panel navigates client-side without the mouse leaving the
+  trigger, so the browser kept the panel's `:hover`/`:focus-within` alive
+  after the route changed. Remounting on navigation (keying on pathname)
+  did **not** fix it — Chromium can re-hit-test `:hover` onto a freshly
+  mounted node at the same cursor position with no pointer movement. The
+  actual fix: the instant a nav link is clicked, a `data-nav-suppressed`
+  attribute force-hides every `.nav-panel` (CSS override in
+  `app/globals.css`, `!important`), and the override only lifts on the next
+  real `pointermove`. Verified with a real Playwright mouse-hover-then-click
+  test, not just code inspection — the naive remount fix looked correct on
+  paper but failed in an actual browser.
   `components/SearchBar.tsx` is a client component, submit-only (Enter or
   the button — NOT live-as-you-type, that was tried and explicitly
   rejected). **On submit it resets all other filter params** — an earlier
@@ -160,16 +189,101 @@ the same upload logic (see conversation history / `storage.ts`).
   are cast via the `ProductWithRelations` type at the call site instead of
   fighting generated-type gymnastics.
 
+## Cart, Buy Now, and checkout (Paystack)
+
+Guest checkout only — **no accounts, no sign-in flow.** This was a deliberate
+call after briefly considering (and rejecting) required accounts: the
+storefront doesn't need cross-device cart sync or saved addresses badly
+enough to justify inventing an anonymous-session system just to have
+something to key a database cart on.
+
+- **Cart is client-side only** — `lib/cart/CartProvider.tsx`, a plain
+  `useReducer` + React Context (no external state library), persisted to
+  `localStorage["otecng:cart"]`. Initial reducer state is always `[]` so SSR
+  and first client render match; the real read from `localStorage` happens
+  in a `useEffect` after mount (`HYDRATE` action) to avoid a hydration
+  mismatch. `useCart()` hook exposes `lines`, `count`, `subtotal`, `hydrated`,
+  and `add`/`setQty`/`remove`/`clear`.
+- **Buy Now** bypasses the cart entirely: `components/AddToCartButtons.tsx`
+  writes a single line item to `sessionStorage["otecng:buyNow"]` (key
+  exported as `BUY_NOW_STORAGE_KEY` from `lib/cart/types.ts`) and routes to
+  `/checkout?mode=buynow`. `CheckoutForm` reads that instead of the real
+  cart when the query param is present — the two never mix, so a Buy Now
+  purchase can't accidentally check out unrelated items sitting in someone's
+  cart.
+- **Orders live in Postgres** (`supabase/migrations/0002_orders.sql`):
+  `orders` + `order_items`, RLS enabled with **zero public policies** — every
+  read/write goes through `lib/supabase/serviceClient.ts` (service-role key)
+  from server-only code (`lib/data/orders.ts`, used only inside
+  `app/api/**` and the callback page). `order_items` snapshot
+  `product_name`/`product_price` at order time since prices can change and
+  there's no product versioning.
+- **Checkout flow**: `/checkout` (`CheckoutForm.tsx`) posts guest info +
+  `{productId, qty}[]` to `POST /api/checkout`
+  (`app/api/checkout/route.ts`), which **recomputes the total server-side**
+  from current DB prices — it never trusts a price the client's cart
+  snapshot sends. It creates the order as `status: 'pending'` *before*
+  calling Paystack's Initialize Transaction, so a record exists even if the
+  customer abandons at Paystack's page. Amounts sent to Paystack are in
+  **kobo** (`Math.round(total * 100)`) — that conversion is the one classic
+  Paystack integration bug, called out explicitly in `lib/paystack.ts`.
+- **Redirect/hosted integration, no client-side Paystack SDK** —
+  `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` doesn't exist and isn't needed, only
+  `PAYSTACK_SECRET_KEY` (server-only). The browser is redirected straight to
+  `authorization_url`; no card data ever touches this app.
+- **Two independent paths mark an order paid**, both idempotent via the same
+  guard: `lib/data/orders.ts`'s `markOrderPaid`/`markOrderFailed` do
+  `UPDATE ... WHERE paystack_reference = $1 AND status = 'pending'` — a
+  second call (retry, or both paths firing) matches 0 rows and no-ops.
+  1. `/checkout/callback` (Server Component) — Paystack redirects here after
+     payment; it calls Verify Transaction **server-side** (never trusts the
+     redirect alone — a customer could hit this URL manually with a
+     fabricated reference) and cross-checks the verified amount against the
+     order's total before marking paid.
+  2. `POST /api/paystack/webhook` — the actual source of truth, independent
+     of whether the customer's browser ever returns. Reads the **raw**
+     request body (`await request.text()`, not pre-parsed JSON) to verify
+     the `x-paystack-signature` HMAC-SHA512 header before doing anything
+     else; that signature check is the endpoint's *only* auth, rejecting
+     with 401 on mismatch. Needs a public URL to receive Paystack's calls —
+     `localhost` isn't reachable, use `ngrok http 3000` (or similar) and
+     register that URL in the Paystack dashboard when testing this end.
+- **Cart clearing is deferred to success, not submission**:
+  `components/ClearCartOnSuccess.tsx` runs only inside the callback page's
+  success branch (not before the Paystack redirect), so an abandoned or
+  declined payment leaves the cart/buy-now state intact for retry. It
+  distinguishes "was this Buy Now or the real cart" by checking whether
+  `otecng:buyNow` sessionStorage is still present — if so it clears only
+  that key; otherwise it clears the persistent cart. Getting this backwards
+  would either wipe an unrelated cart on a Buy Now purchase, or leave stale
+  items after a real cart checkout.
+- **`app/api/checkout/route.ts` wraps its entire body in one `try/catch`.**
+  An earlier version only wrapped the Paystack call — when the `orders`
+  table didn't exist yet (before the migration had been run), the
+  `createPendingOrder` throw went unhandled and Next returned its generic
+  HTML 500 page instead of JSON, which broke `CheckoutForm`'s `res.json()`
+  parse. Caught by an actual browser test hitting submit before assuming it
+  worked — don't re-narrow this try/catch without re-testing that failure
+  mode.
+- Product quantity is picked via a stepper on the product detail page
+  (`AddToCartButtons.tsx`), stacked **above** the Add to Cart / Buy Now
+  buttons (not beside them — that was an explicit correction), min-clamped
+  at 1, resets to 1 after adding.
+- `components/CartBadge.tsx` in the header renders nothing until the cart
+  has hydrated from `localStorage`, to avoid a flash of "0" on load.
+
 ## Things worth knowing before you touch this
 
 - **Image hosts**: `next.config.ts` whitelists the Supabase Storage
   hostname for `next/image`. If you rotate/recreate the Supabase project,
   update that.
 - **Env vars**: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-  (client-safe), `SUPABASE_SERVICE_ROLE_KEY` (import script only, never
-  imported by app code). Template at `.env.local.example`. Uses Supabase's
-  newer `sb_publishable_...` / `sb_secret_...` key format, not the legacy
-  JWT anon/service_role keys.
+  (client-safe); `SUPABASE_SERVICE_ROLE_KEY` (server-only — the import
+  script, plus `lib/supabase/serviceClient.ts` for order reads/writes);
+  `PAYSTACK_SECRET_KEY` (server-only, `sk_test_...` in dev — checkout +
+  webhook, see the Cart/checkout section above). Template at
+  `.env.local.example`. Uses Supabase's newer `sb_publishable_...` /
+  `sb_secret_...` key format, not the legacy JWT anon/service_role keys.
 - **Colors**: brand orange is the shadcn `--primary` token (defined in
   `app/globals.css`), not scattered `orange-600` utility classes — use
   `text-primary` / `bg-primary` etc. for consistency.
@@ -185,10 +299,18 @@ the same upload logic (see conversation history / `storage.ts`).
 
 ## What's explicitly NOT built yet (known next steps)
 
-- Cart / checkout / payments
-- User accounts / auth
+- User accounts / auth (deliberately out of scope, not just deferred — see
+  the Cart/checkout section above)
 - Admin UI for managing products (for now: re-run `npm run seed`, or edit
-  directly in the Supabase dashboard)
+  directly in the Supabase dashboard). Same goes for orders — no admin view
+  of them yet, check the Supabase dashboard table editor.
+- Order confirmation emails / SMS — an order lands in Postgres and the
+  customer sees an on-screen confirmation, but nothing gets emailed to
+  either the customer or the store.
+- Stock/inventory tracking — `products` has no quantity-on-hand column;
+  checkout doesn't check or decrement anything.
+- Delivery fee calculation — checkout total is just the item subtotal, no
+  shipping cost logic exists.
 - Any TV/washing-machine/AC size-and-brand filtering beyond what
   refrigerators has (user said "only refrigerators" when this came up —
   don't generalize it further without asking)
