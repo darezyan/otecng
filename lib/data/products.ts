@@ -82,7 +82,19 @@ function inBracket(value: number | null, bracket: string): boolean {
   return value >= min && (max === null || value <= max);
 }
 
+export const SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "price-asc", label: "Price: low to high" },
+  { value: "price-desc", label: "Price: high to low" },
+] as const;
+export type SortValue = (typeof SORT_OPTIONS)[number]["value"];
+
+export function parseSort(value: string | undefined): SortValue {
+  return SORT_OPTIONS.some((o) => o.value === value) ? (value as SortValue) : "newest";
+}
+
 export type ProductFilters = {
+  sort?: SortValue;
   brandSlug?: string;
   categorySlug?: string;
   query?: string;
@@ -95,10 +107,17 @@ export type ProductFilters = {
 export async function getProducts(
   filters: ProductFilters = {}
 ): Promise<{ products: ProductWithRelations[]; count: number }> {
-  const { brandSlug, categorySlug, query, sizeBracket, priceBracket, page = 1, pageSize = 24 } = filters;
+  const { brandSlug, categorySlug, query, sizeBracket, priceBracket, sort = "newest", page = 1, pageSize = 24 } = filters;
   const supabase = createSupabaseClient();
 
   let dbQuery = supabase.from("products").select(PRODUCT_SELECT, { count: "exact" });
+
+  // Primary sort, then created_at/id as tie-breakers so pages don't reshuffle.
+  const ordered = <T extends { order: (col: string, opts: { ascending: boolean }) => T }>(q: T): T => {
+    if (sort === "price-asc") q = q.order("price", { ascending: true });
+    if (sort === "price-desc") q = q.order("price", { ascending: false });
+    return q.order("created_at", { ascending: false }).order("id", { ascending: true });
+  };
 
   if (brandSlug) {
     const { data: brand } = await supabase.from("brands").select("id").eq("slug", brandSlug).single();
@@ -124,7 +143,7 @@ export async function getProducts(
   // (already narrowly-filtered) candidate set unpaginated and filter/paginate
   // in memory instead. Fine at this scale (a few hundred rows per category).
   if (sizeBracket) {
-    const { data, error } = await dbQuery.order("created_at", { ascending: false });
+    const { data, error } = await ordered(dbQuery);
     if (error) throw error;
     const filtered = ((data ?? []) as unknown as ProductWithRelations[]).filter((p) =>
       inBracket(extractLiters(p.name), sizeBracket)
@@ -135,7 +154,7 @@ export async function getProducts(
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  const { data, error, count } = await dbQuery.order("created_at", { ascending: false }).range(from, to);
+  const { data, error, count } = await ordered(dbQuery).range(from, to);
   if (error) throw error;
   return { products: (data ?? []) as unknown as ProductWithRelations[], count: count ?? 0 };
 }

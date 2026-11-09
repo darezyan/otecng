@@ -115,10 +115,10 @@ export default async function Home() {
         <SectionHeader title="Shop by category" />
         <ul className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-4">
           {categories.map((category) => (
-            <li key={category.id} className="w-[42%] shrink-0 sm:w-auto">
+            <li key={category.id} className="w-max shrink-0 sm:w-auto">
               <Link
                 href={`/products?category=${category.slug}`}
-                className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-2.5 transition-colors hover:border-zinc-400"
+                className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-2.5 pr-5 transition-colors hover:border-zinc-400 sm:pr-2.5"
               >
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-md bg-white">
                   {category.image && (
@@ -126,7 +126,7 @@ export default async function Home() {
                   )}
                 </span>
                 <span className="min-w-0">
-                  <span className="block text-sm leading-tight font-semibold text-zinc-900">{category.name}</span>
+                  <span className="block text-sm leading-tight font-semibold whitespace-nowrap text-zinc-900 sm:whitespace-normal">{category.name}</span>
                   <span className="block text-xs whitespace-nowrap text-zinc-500">{category.count} products</span>
                 </span>
               </Link>

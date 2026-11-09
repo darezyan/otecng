@@ -20,6 +20,7 @@ export default function MobileFilters({
   sizes,
   active,
   query,
+  sort,
   count,
 }: {
   categories: Category[];
@@ -28,6 +29,7 @@ export default function MobileFilters({
   sizes?: SizeFacet[];
   active: Selection;
   query?: string;
+  sort?: string;
   count: number;
 }) {
   const router = useRouter();
@@ -55,6 +57,7 @@ export default function MobileFilters({
   function apply(next: Selection) {
     const qs = new URLSearchParams();
     if (query) qs.set("q", query);
+    if (sort && sort !== "newest") qs.set("sort", sort);
     for (const [k, v] of Object.entries(next)) if (v) qs.set(k, v);
     setOpen(false);
     router.push(qs.size ? `/products?${qs}` : "/products");
