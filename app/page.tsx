@@ -126,7 +126,7 @@ export default async function Home() {
                   )}
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold text-zinc-900">{category.name}</span>
+                  <span className="block text-sm leading-tight font-semibold text-zinc-900">{category.name}</span>
                   <span className="block text-xs text-zinc-500">{category.count} products</span>
                 </span>
               </Link>
