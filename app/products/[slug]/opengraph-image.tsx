@@ -14,7 +14,7 @@ export default async function Image({ params }: { params: Promise<{ slug: string
   const fonts = await ogFonts();
 
   if (!product) {
-    return new ImageResponse(<BrandCard title="Home appliances, made simple." />, { ...size, fonts });
+    return new ImageResponse(<BrandCard title="Electronics Made Easy" />, { ...size, fonts });
   }
 
   const sorted = [...product.product_images].sort((a, b) => a.position - b.position);

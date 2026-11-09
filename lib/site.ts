@@ -1,5 +1,5 @@
 export const SITE_NAME = "otecng";
-export const SITE_TAGLINE = "Genuine home appliances, delivered";
+export const SITE_TAGLINE = "Electronics Made Easy";
 export const SITE_DESCRIPTION =
   "Shop genuine TVs, refrigerators, freezers, air conditioners, washing machines and home appliances from trusted brands like Hisense, LG, Maxi and Thermocool. Honest prices, secure checkout with Squad by GTCO and doorstep delivery in Nigeria.";
 
