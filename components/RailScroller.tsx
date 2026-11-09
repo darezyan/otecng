@@ -43,7 +43,7 @@ export default function RailScroller({ children, label }: { children: React.Reac
         ref={ref}
         role="region"
         aria-label={label}
-        className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:mx-0 sm:gap-4 sm:px-0"
+        className="no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 sm:mx-0 sm:scroll-px-0 sm:gap-4 sm:px-0"
       >
         {children}
       </div>

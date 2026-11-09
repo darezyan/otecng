@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { SITE_NAME } from "@/lib/site";
-import { getProducts, getCategories, getBrands, getSizeFacets, SIZE_FILTER_CATEGORIES } from "@/lib/data/products";
+import { getProducts, getCategories, getBrands, getSizeFacets, PRICE_BRACKETS, SIZE_FILTER_CATEGORIES } from "@/lib/data/products";
 import { getPaginationRange } from "@/lib/pagination";
 import ProductGrid from "@/components/ProductGrid";
 import FilterBar from "@/components/FilterBar";
+import MobileFilters from "@/components/MobileFilters";
 import {
   Pagination,
   PaginationContent,
@@ -97,14 +98,33 @@ export default async function ProductsPage({
     return `/products?${qs.toString()}`;
   };
 
-  const heading = params.q ? `Results for "${params.q}"` : "All products";
+  const activeCategoryName = categories.find((c) => c.slug === params.category)?.name;
+  const activeBrandName = brands.find((b) => b.slug === params.brand)?.name;
+  const heading = params.q
+    ? `Results for "${params.q}"`
+    : [activeBrandName, activeCategoryName ?? (activeBrandName ? "products" : "All products")].filter(Boolean).join(" ");
   const paginationRange = getPaginationRange(page, totalPages);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="mb-6 font-heading text-2xl font-bold text-foreground">{heading}</h1>
+    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8 lg:py-10">
+      <h1 className="mb-4 font-heading text-xl font-bold text-foreground sm:text-2xl lg:mb-6">{heading}</h1>
+
+      {/* Phones/tablets: products first; filters live in a full-screen sheet */}
+      <div className="mb-4 flex items-center justify-between lg:hidden">
+        <MobileFilters
+          categories={categories}
+          brands={brands}
+          priceBrackets={PRICE_BRACKETS}
+          sizes={sizes}
+          active={{ category: params.category, brand: params.brand, price: params.price, size: params.size }}
+          query={params.q}
+          count={count}
+        />
+        <p className="text-sm text-muted-foreground">{count} products</p>
+      </div>
 
       <div className="flex flex-col gap-8 lg:flex-row">
+        <div className="hidden lg:block">
         <FilterBar
           categories={categories}
           brands={brands}
@@ -114,9 +134,10 @@ export default async function ProductsPage({
           activeSize={params.size}
           activePrice={params.price}
         />
+        </div>
 
         <div className="flex-1">
-          <p className="mb-4 text-sm text-muted-foreground">{count} products</p>
+          <p className="mb-4 hidden text-sm text-muted-foreground lg:block">{count} products</p>
           <ProductGrid products={products} />
 
           {totalPages > 1 && (

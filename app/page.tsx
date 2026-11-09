@@ -86,7 +86,7 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-1">
+        <div className="hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-1">
           {sideTiles.map(({ slug, image, category }) => (
             <Link
               key={slug}
@@ -113,9 +113,9 @@ export default async function Home() {
       {/* Shop by category */}
       <section className="mt-12 mb-12">
         <SectionHeader title="Shop by category" />
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-4">
           {categories.map((category) => (
-            <li key={category.id}>
+            <li key={category.id} className="w-[42%] shrink-0 sm:w-auto">
               <Link
                 href={`/products?category=${category.slug}`}
                 className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-2.5 transition-colors hover:border-zinc-400"
@@ -127,7 +127,7 @@ export default async function Home() {
                 </span>
                 <span className="min-w-0">
                   <span className="block text-sm leading-tight font-semibold text-zinc-900">{category.name}</span>
-                  <span className="block text-xs text-zinc-500">{category.count} products</span>
+                  <span className="block text-xs whitespace-nowrap text-zinc-500">{category.count} products</span>
                 </span>
               </Link>
             </li>
@@ -143,12 +143,12 @@ export default async function Home() {
       {/* Brands */}
       <section className="mb-12">
         <SectionHeader title="Shop by brand" />
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+        <ul className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-8">
           {brands.map((brand) => (
-            <li key={brand.id}>
+            <li key={brand.id} className="shrink-0 sm:shrink">
               <Link
                 href={`/products?brand=${brand.slug}`}
-                className="flex h-16 items-center justify-center rounded-lg border border-zinc-200 bg-white font-heading text-base font-bold text-zinc-900 transition-colors hover:border-zinc-400"
+                className="flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 font-heading text-sm font-bold whitespace-nowrap text-zinc-900 transition-colors hover:border-zinc-400 sm:h-16 sm:rounded-lg sm:px-0 sm:text-base"
               >
                 {brand.name}
               </Link>
@@ -157,7 +157,10 @@ export default async function Home() {
         </ul>
       </section>
 
-      <section>
+      <div className="sm:hidden">
+        <ProductRow title="Featured products" href="/products" products={featured} />
+      </div>
+      <section className="hidden sm:block">
         <SectionHeader title="Featured products" href="/products" />
         <ProductGrid products={featured} />
       </section>

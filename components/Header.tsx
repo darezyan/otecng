@@ -2,10 +2,11 @@ import Link from "next/link";
 import { Suspense } from "react";
 import CartBadge from "./CartBadge";
 import HeaderNav from "./HeaderNav";
+import MobileMenu from "./MobileMenu";
 import SearchBar from "./SearchBar";
 
 function NavRowSkeleton() {
-  return <div className="h-10.25 border-t" aria-hidden />;
+  return <div className="hidden h-10.25 border-t lg:block" aria-hidden />;
 }
 
 // Deliberately synchronous — CartBadge needs no async data and hydrating it
@@ -16,7 +17,10 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
       {/* Row 1: logo + search */}
-      <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:gap-6 sm:px-6 lg:px-8">
+        <Suspense fallback={<div className="-ml-2 size-10 lg:hidden" />}>
+          <MobileMenu />
+        </Suspense>
         <Link href="/" className="shrink-0 font-heading text-2xl font-extrabold tracking-tight text-foreground">
           otec<span className="text-primary">ng</span>
         </Link>
