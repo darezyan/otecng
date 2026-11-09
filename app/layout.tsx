@@ -75,7 +75,7 @@ const orgJsonLd = {
       "@id": absoluteUrl("/#store"),
       name: SITE_NAME,
       url: absoluteUrl("/"),
-      logo: absoluteUrl("/opengraph-image"),
+      logo: absoluteUrl("/icon.svg"),
       description: SITE_DESCRIPTION,
       currenciesAccepted: "NGN",
       areaServed: { "@type": "Country", name: "Nigeria" },
@@ -98,7 +98,7 @@ const orgJsonLd = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en-NG" className={`${inter.variable} ${jakarta.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-background font-sans text-foreground">
+      <body className="flex min-h-full flex-col overflow-x-clip bg-background font-sans text-foreground">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd).replace(/</g, "\\u003c") }}
