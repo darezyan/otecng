@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { markOrderFailed, markOrderPaid } from "@/lib/data/orders";
+import { markOrderFailed } from "@/lib/data/orders";
+import { markPaidAndSendReceipt } from "@/lib/email/send";
 import { verifyWebhookSignature } from "@/lib/squad";
 
 type SquadWebhookPayload = {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
   const status = String(event.Body?.transaction_status ?? "").toLowerCase();
 
   if (event.Event === "charge_successful" && status === "success") {
-    await markOrderPaid(reference);
+    await markPaidAndSendReceipt(reference);
   } else if (status === "failed" || status === "abandoned") {
     await markOrderFailed(reference);
   }

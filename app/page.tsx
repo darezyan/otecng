@@ -1,95 +1,169 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getFeaturedProducts, getBrands, getHeroImages, getProductsByCategorySlug } from "@/lib/data/products";
+import {
+  getBrands,
+  getHeroImages,
+  getCategoryTiles,
+  getFeaturedProducts,
+  getProductsByCategorySlug,
+} from "@/lib/data/products";
+import { formatNaira } from "@/lib/format";
 import ProductGrid from "@/components/ProductGrid";
-import ProductRow from "@/components/ProductRow";
-import { Button } from "@/components/ui/button";
+import ProductRow, { SectionHeader } from "@/components/ProductRow";
 
-// Even 2x2 grid — two columns, two rows, consistent gaps, alternating tilt.
-const HERO_TILE_STYLES = [
-  "top-10 right-[32%] w-36 -rotate-6 sm:w-40",
-  "top-10 right-[4%] w-36 rotate-6 sm:w-40",
-  "bottom-10 right-[32%] w-36 rotate-6 sm:w-40",
-  "bottom-10 right-[4%] w-36 -rotate-6 sm:w-40",
-];
+// Re-fetch catalogue data hourly so prices and new products show up without a redeploy.
+export const revalidate = 3600;
+
+function primaryImageUrl(images: { url: string; is_primary: boolean; position: number }[]) {
+  return (images.find((i) => i.is_primary) ?? [...images].sort((a, b) => a.position - b.position)[0])?.url ?? null;
+}
 
 export default async function Home() {
-  const [featured, brands, heroImages, tvs, refrigerators, freezers, acs] = await Promise.all([
+  const [featured, brands, categories, heroImages, tvs, refrigerators, freezers, acs] = await Promise.all([
     getFeaturedProducts(8),
     getBrands(),
+    getCategoryTiles(),
     getHeroImages(),
-    getProductsByCategorySlug("tvs", 10),
-    getProductsByCategorySlug("refrigerators", 10),
-    getProductsByCategorySlug("freezers", 10),
-    getProductsByCategorySlug("acs", 10),
+    getProductsByCategorySlug("tvs", 12),
+    getProductsByCategorySlug("refrigerators", 12),
+    getProductsByCategorySlug("freezers", 12),
+    getProductsByCategorySlug("acs", 12),
   ]);
 
-  return (
-    <div>
-      {/* Full-bleed hero */}
-      <section className="relative overflow-hidden bg-zinc-950 py-20 sm:py-28">
-        <div
-          className="absolute top-1/2 right-[10%] size-[28rem] -translate-y-1/2 rounded-full bg-primary/25 blur-[110px]"
-          aria-hidden
-        />
+  const heroProduct = refrigerators[0];
+  const heroImage = heroProduct ? primaryImageUrl(heroProduct.product_images) : null;
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-xl">
-            <h1 className="font-heading text-4xl font-extrabold tracking-tight text-white sm:text-6xl">
-              Electronics Made Easy
-            </h1>
-            <p className="mt-4 max-w-md text-base text-zinc-300 sm:text-lg">
-              Shop quality electronics for your home, work, and everyday life.
-            </p>
-            <Button size="lg" className="mt-8" render={<Link href="/products">Shop all products</Link>} />
+  // Side tiles: a representative photo (curated in getHeroImages: TV first,
+  // Hisense AC last) plus the category's real product count.
+  const sideTiles = [
+    { slug: "tvs", image: heroImages[0] ?? null },
+    { slug: "acs", image: heroImages[3] ?? null },
+  ]
+    .map((t) => ({ ...t, category: categories.find((c) => c.slug === t.slug) }))
+    .filter((t) => t.category);
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+      {/* Hero: one static banner + two category tiles (no carousel) */}
+      <section className="grid gap-4 lg:grid-cols-3">
+        <div className="relative overflow-hidden rounded-xl bg-zinc-950 lg:col-span-2">
+          <div className="grid h-full items-center gap-6 p-7 sm:p-10 md:grid-cols-2">
+            <div>
+              <h1 className="font-heading text-4xl leading-[1.05] font-extrabold tracking-tight text-white sm:text-5xl">
+                Electronics Made Easy
+              </h1>
+              <p className="mt-4 max-w-sm text-base text-zinc-300">
+                Shop quality electronics for your home, work, and everyday life.
+              </p>
+              <Link
+                href="/products"
+                className="mt-7 inline-flex h-11 items-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                Shop all products
+              </Link>
+            </div>
+
+            {heroProduct && heroImage && (
+              <Link href={`/products/${heroProduct.slug}`} className="group hidden rounded-lg bg-white p-4 md:block">
+                <div className="relative aspect-[4/3] w-full">
+                  <Image
+                    src={heroImage}
+                    alt={heroProduct.name}
+                    fill
+                    priority
+                    sizes="(min-width: 1024px) 28vw, 40vw"
+                    className="object-contain"
+                  />
+                </div>
+                <div className="mt-3 flex items-end justify-between gap-3 border-t border-zinc-100 pt-3">
+                  <span className="line-clamp-1 text-sm text-zinc-600">{heroProduct.name}</span>
+                  <span className="shrink-0 font-heading text-base font-bold text-zinc-950">
+                    {formatNaira(heroProduct.price)}
+                  </span>
+                </div>
+              </Link>
+            )}
           </div>
         </div>
 
-        <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden>
-          {heroImages.map((url, i) => (
-            <div
-              key={url}
-              className={`absolute overflow-hidden rounded-xl bg-zinc-100 p-2 shadow-2xl ${HERO_TILE_STYLES[i % HERO_TILE_STYLES.length]}`}
+        <div className="hidden gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-1">
+          {sideTiles.map(({ slug, image, category }) => (
+            <Link
+              key={slug}
+              href={`/products?category=${slug}`}
+              className="group flex flex-col-reverse gap-3 rounded-xl border border-zinc-200 bg-white p-4 transition-colors hover:border-zinc-400 sm:flex-row sm:items-center sm:gap-4 sm:p-5"
             >
-              <div className="relative aspect-square w-full">
-                <Image src={url} alt="" fill sizes="200px" className="object-contain" />
+              <div className="min-w-0 flex-1">
+                <p className="font-heading text-base font-bold text-zinc-950 sm:text-lg">{category!.name}</p>
+                <p className="mt-0.5 text-sm text-zinc-500">{category!.count} products</p>
+                <span className="mt-3 inline-block text-sm font-semibold text-zinc-900 group-hover:underline">
+                  Shop now
+                </span>
               </div>
-            </div>
+              {image && (
+                <div className="relative aspect-square w-full shrink-0 sm:size-32 sm:w-32">
+                  <Image src={image} alt="" fill sizes="(min-width: 640px) 128px, 45vw" className="object-contain" />
+                </div>
+              )}
+            </Link>
           ))}
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <section className="mb-14">
-          <h2 className="mb-4 text-xs font-semibold tracking-wide text-muted-foreground uppercase">Shop by brand</h2>
-          <div className="flex flex-wrap gap-3">
-            {brands.map((brand) => (
+      {/* Shop by category */}
+      <section className="mt-12 mb-12">
+        <SectionHeader title="Shop by category" />
+        <ul className="no-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+          {categories.map((category) => (
+            <li key={category.id} className="w-max shrink-0 sm:w-auto">
               <Link
-                key={brand.id}
+                href={`/products?category=${category.slug}`}
+                className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white p-2.5 pr-5 transition-colors hover:border-zinc-400 sm:pr-2.5"
+              >
+                <span className="relative size-14 shrink-0 overflow-hidden rounded-md bg-white">
+                  {category.image && (
+                    <Image src={category.image} alt="" fill sizes="56px" className="object-contain" />
+                  )}
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm leading-tight font-semibold whitespace-nowrap text-zinc-900 sm:whitespace-normal">{category.name}</span>
+                  <span className="block text-xs whitespace-nowrap text-zinc-500">{category.count} products</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <ProductRow title="Televisions" href="/products?category=tvs" products={tvs} />
+      <ProductRow title="Refrigerators" href="/products?category=refrigerators" products={refrigerators} />
+      <ProductRow title="Freezers" href="/products?category=freezers" products={freezers} />
+      <ProductRow title="Air Conditioners" href="/products?category=acs" products={acs} />
+
+      {/* Brands */}
+      <section className="mb-12">
+        <SectionHeader title="Shop by brand" />
+        <ul className="no-scrollbar -mx-4 flex gap-2.5 overflow-x-auto px-4 sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0 lg:grid-cols-8">
+          {brands.map((brand) => (
+            <li key={brand.id} className="shrink-0 sm:shrink">
+              <Link
                 href={`/products?brand=${brand.slug}`}
-                className="rounded-full border bg-background px-5 py-2 text-sm font-medium text-foreground transition-colors hover:border-primary hover:text-primary"
+                className="flex h-11 items-center justify-center rounded-full border border-zinc-200 bg-white px-5 font-heading text-sm font-bold whitespace-nowrap text-zinc-900 transition-colors hover:border-zinc-400 sm:h-16 sm:rounded-lg sm:px-0 sm:text-base"
               >
                 {brand.name}
               </Link>
-            ))}
-          </div>
-        </section>
+            </li>
+          ))}
+        </ul>
+      </section>
 
-        <ProductRow title="Televisions" href="/products?category=tvs" products={tvs} />
-        <ProductRow title="Refrigerators" href="/products?category=refrigerators" products={refrigerators} />
-        <ProductRow title="Freezers" href="/products?category=freezers" products={freezers} />
-        <ProductRow title="Air Conditioners" href="/products?category=acs" products={acs} />
-
-        <section>
-          <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="font-heading text-lg font-bold text-foreground">Featured products</h2>
-            <Link href="/products" className="text-sm font-medium text-primary hover:text-primary/80">
-              View all &rarr;
-            </Link>
-          </div>
-          <ProductGrid products={featured} />
-        </section>
+      <div className="sm:hidden">
+        <ProductRow title="Featured products" href="/products" products={featured} />
       </div>
+      <section className="hidden sm:block">
+        <SectionHeader title="Featured products" href="/products" />
+        <ProductGrid products={featured} />
+      </section>
     </div>
   );
 }

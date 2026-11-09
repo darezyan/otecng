@@ -1,7 +1,11 @@
-import { getProducts, getCategories, getBrands, getSizeFacets, SIZE_FILTER_CATEGORIES } from "@/lib/data/products";
+import type { Metadata } from "next";
+import { SITE_NAME } from "@/lib/site";
+import { getProducts, getCategories, getBrands, getSizeFacets, parseSort, PRICE_BRACKETS, SIZE_FILTER_CATEGORIES } from "@/lib/data/products";
 import { getPaginationRange } from "@/lib/pagination";
 import ProductGrid from "@/components/ProductGrid";
 import FilterBar from "@/components/FilterBar";
+import MobileFilters from "@/components/MobileFilters";
+import SortControl from "@/components/SortControl";
 import {
   Pagination,
   PaginationContent,
@@ -14,12 +18,55 @@ import {
 
 const PAGE_SIZE = 24;
 
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; brand?: string; q?: string; size?: string; price?: string; page?: string; sort?: string }>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const [categories, brands] = await Promise.all([getCategories(), getBrands()]);
+  const category = categories.find((c) => c.slug === params.category);
+  const brand = brands.find((b) => b.slug === params.brand);
+
+  const title = params.q
+    ? `Search: ${params.q}`
+    : category && brand
+      ? `${brand.name} ${category.name}`
+      : category
+        ? category.name
+        : brand
+          ? `${brand.name} appliances`
+          : "Shop all appliances";
+  const description = params.q
+    ? `Search results for "${params.q}" at ${SITE_NAME}. Genuine appliances with secure checkout and doorstep delivery.`
+    : `Shop ${[brand?.name, category?.name.toLowerCase() ?? "home appliances"].filter(Boolean).join(" ")} at ${SITE_NAME}. Genuine products from trusted brands, with secure checkout and doorstep delivery in Nigeria.`;
+
+  const canonical = new URLSearchParams();
+  if (category) canonical.set("category", category.slug);
+  if (brand) canonical.set("brand", brand.slug);
+  const canonicalUrl = canonical.size ? `/products?${canonical}` : "/products";
+  const og = new URLSearchParams(canonical);
+  if (params.q) og.set("q", params.q);
+  const ogImage = { url: `/og${og.size ? `?${og}` : ""}`, width: 1200, height: 630, alt: title };
+
+  return {
+    title,
+    description,
+    alternates: { canonical: canonicalUrl },
+    // Search results and deep filter combinations shouldn't be indexed.
+    robots: params.q || params.price || params.size || params.page ? { index: false, follow: true } : undefined,
+    openGraph: { type: "website", url: canonicalUrl, title, description, images: [ogImage] },
+    twitter: { card: "summary_large_image", title, description, images: [ogImage] },
+  };
+}
+
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; brand?: string; q?: string; size?: string; price?: string; page?: string }>;
+  searchParams: Promise<{ category?: string; brand?: string; q?: string; size?: string; price?: string; page?: string; sort?: string }>;
 }) {
   const params = await searchParams;
+  const sort = parseSort(params.sort);
   const page = Math.max(1, Number(params.page ?? 1) || 1);
 
   const [{ products, count }, categories, brands, sizes] = await Promise.all([
@@ -29,6 +76,7 @@ export default async function ProductsPage({
       query: params.q,
       sizeBracket: params.size,
       priceBracket: params.price,
+      sort,
       page,
       pageSize: PAGE_SIZE,
     }),
@@ -46,6 +94,7 @@ export default async function ProductsPage({
   if (params.q) baseParams.set("q", params.q);
   if (params.size) baseParams.set("size", params.size);
   if (params.price) baseParams.set("price", params.price);
+  if (sort !== "newest") baseParams.set("sort", sort);
 
   const pageHref = (p: number) => {
     const qs = new URLSearchParams(baseParams);
@@ -53,14 +102,35 @@ export default async function ProductsPage({
     return `/products?${qs.toString()}`;
   };
 
-  const heading = params.q ? `Results for "${params.q}"` : "All products";
+  const activeCategoryName = categories.find((c) => c.slug === params.category)?.name;
+  const activeBrandName = brands.find((b) => b.slug === params.brand)?.name;
+  const heading = params.q
+    ? `Results for "${params.q}"`
+    : [activeBrandName, activeCategoryName ?? (activeBrandName ? "products" : "All products")].filter(Boolean).join(" ");
   const paginationRange = getPaginationRange(page, totalPages);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <h1 className="mb-6 font-heading text-2xl font-bold text-foreground">{heading}</h1>
+    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8 lg:py-10">
+      <h1 className="mb-4 font-heading text-xl font-bold text-foreground sm:text-2xl lg:mb-6">{heading}</h1>
+
+      {/* Phones/tablets: products first; filters live in a full-screen sheet */}
+      <div className="mb-4 flex items-center gap-2 lg:hidden">
+        <MobileFilters
+          categories={categories}
+          brands={brands}
+          priceBrackets={PRICE_BRACKETS}
+          sizes={sizes}
+          active={{ category: params.category, brand: params.brand, price: params.price, size: params.size }}
+          query={params.q}
+          sort={sort}
+          count={count}
+        />
+        <SortControl sort={sort} variant="mobile" />
+        <p className="ml-auto text-sm text-muted-foreground">{count} products</p>
+      </div>
 
       <div className="flex flex-col gap-8 lg:flex-row">
+        <div className="hidden lg:block">
         <FilterBar
           categories={categories}
           brands={brands}
@@ -69,10 +139,15 @@ export default async function ProductsPage({
           activeBrand={params.brand}
           activeSize={params.size}
           activePrice={params.price}
+          activeSort={sort === "newest" ? undefined : sort}
         />
+        </div>
 
         <div className="flex-1">
-          <p className="mb-4 text-sm text-muted-foreground">{count} products</p>
+          <div className="mb-4 hidden items-center justify-between lg:flex">
+            <p className="text-sm text-muted-foreground">{count} products</p>
+            <SortControl sort={sort} variant="desktop" />
+          </div>
           <ProductGrid products={products} />
 
           {totalPages > 1 && (

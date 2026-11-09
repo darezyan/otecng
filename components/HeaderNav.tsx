@@ -37,7 +37,7 @@ export default async function HeaderNav() {
   );
 
   return (
-    <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div className="relative mx-auto hidden max-w-7xl px-4 sm:px-6 lg:block lg:px-8">
       <NavAutoClose>
         <nav className="flex flex-wrap items-center gap-1 py-1">
           {priorityMenus.map(({ category, brands: categoryBrands, thumbnail, sizes }) => (

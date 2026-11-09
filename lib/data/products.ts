@@ -82,7 +82,19 @@ function inBracket(value: number | null, bracket: string): boolean {
   return value >= min && (max === null || value <= max);
 }
 
+export const SORT_OPTIONS = [
+  { value: "newest", label: "Newest" },
+  { value: "price-asc", label: "Price: low to high" },
+  { value: "price-desc", label: "Price: high to low" },
+] as const;
+export type SortValue = (typeof SORT_OPTIONS)[number]["value"];
+
+export function parseSort(value: string | undefined): SortValue {
+  return SORT_OPTIONS.some((o) => o.value === value) ? (value as SortValue) : "newest";
+}
+
 export type ProductFilters = {
+  sort?: SortValue;
   brandSlug?: string;
   categorySlug?: string;
   query?: string;
@@ -95,10 +107,17 @@ export type ProductFilters = {
 export async function getProducts(
   filters: ProductFilters = {}
 ): Promise<{ products: ProductWithRelations[]; count: number }> {
-  const { brandSlug, categorySlug, query, sizeBracket, priceBracket, page = 1, pageSize = 24 } = filters;
+  const { brandSlug, categorySlug, query, sizeBracket, priceBracket, sort = "newest", page = 1, pageSize = 24 } = filters;
   const supabase = createSupabaseClient();
 
   let dbQuery = supabase.from("products").select(PRODUCT_SELECT, { count: "exact" });
+
+  // Primary sort, then created_at/id as tie-breakers so pages don't reshuffle.
+  const ordered = <T extends { order: (col: string, opts: { ascending: boolean }) => T }>(q: T): T => {
+    if (sort === "price-asc") q = q.order("price", { ascending: true });
+    if (sort === "price-desc") q = q.order("price", { ascending: false });
+    return q.order("created_at", { ascending: false }).order("id", { ascending: true });
+  };
 
   if (brandSlug) {
     const { data: brand } = await supabase.from("brands").select("id").eq("slug", brandSlug).single();
@@ -124,7 +143,7 @@ export async function getProducts(
   // (already narrowly-filtered) candidate set unpaginated and filter/paginate
   // in memory instead. Fine at this scale (a few hundred rows per category).
   if (sizeBracket) {
-    const { data, error } = await dbQuery.order("created_at", { ascending: false });
+    const { data, error } = await ordered(dbQuery);
     if (error) throw error;
     const filtered = ((data ?? []) as unknown as ProductWithRelations[]).filter((p) =>
       inBracket(extractLiters(p.name), sizeBracket)
@@ -135,7 +154,7 @@ export async function getProducts(
 
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
-  const { data, error, count } = await dbQuery.order("created_at", { ascending: false }).range(from, to);
+  const { data, error, count } = await ordered(dbQuery).range(from, to);
   if (error) throw error;
   return { products: (data ?? []) as unknown as ProductWithRelations[], count: count ?? 0 };
 }
@@ -287,4 +306,52 @@ export async function getHeroImages(): Promise<string[]> {
     })
   );
   return results.filter((url): url is string => Boolean(url));
+}
+
+// Homepage "Shop by category" tiles: every category with a product count and
+// one representative photo.
+export type CategoryTile = { id: string; name: string; slug: string; count: number; image: string | null };
+
+export async function getCategoryTiles(): Promise<CategoryTile[]> {
+  const supabase = createSupabaseClient();
+  const categories = await getCategories();
+  const tiles = await Promise.all(
+    categories.map(async (category) => {
+      const [{ count }, { data: imageRow }] = await Promise.all([
+        supabase.from("products").select("id", { count: "exact", head: true }).eq("category_id", category.id),
+        supabase
+          .from("products")
+          .select("product_images(url, is_primary)")
+          .eq("category_id", category.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      const images = (imageRow?.product_images ?? []) as { url: string; is_primary: boolean }[];
+      return {
+        ...category,
+        count: count ?? 0,
+        image: images.find((i) => i.is_primary)?.url ?? images[0]?.url ?? null,
+      };
+    })
+  );
+  return tiles.filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
+}
+
+// For sitemap.xml: every product slug with its created_at, paged past
+// PostgREST's default 1000-row cap.
+export async function getAllProductSlugs(): Promise<{ slug: string; created_at: string }[]> {
+  const supabase = createSupabaseClient();
+  const out: { slug: string; created_at: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
+      .from("products")
+      .select("slug, created_at")
+      .order("created_at", { ascending: false })
+      .range(from, from + 999);
+    if (error) throw error;
+    out.push(...((data ?? []) as { slug: string; created_at: string }[]));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
 }

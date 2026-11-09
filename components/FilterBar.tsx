@@ -41,6 +41,7 @@ export default function FilterBar({
   activeBrand,
   activeSize,
   activePrice,
+  activeSort,
 }: {
   categories: Category[];
   brands: Brand[];
@@ -49,8 +50,9 @@ export default function FilterBar({
   activeBrand?: string;
   activeSize?: string;
   activePrice?: string;
+  activeSort?: string;
 }) {
-  const current = { category: activeCategory, brand: activeBrand, size: activeSize, price: activePrice };
+  const current = { category: activeCategory, brand: activeBrand, size: activeSize, price: activePrice, sort: activeSort };
 
   return (
     <aside className="w-full shrink-0 space-y-6 lg:w-56">

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 
-export default function SearchBar() {
+export default function SearchBar({ className = "hidden flex-1 max-w-xl sm:block" }: { className?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -20,7 +20,7 @@ export default function SearchBar() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="hidden flex-1 max-w-xl sm:block">
+    <form onSubmit={handleSubmit} role="search" className={className}>
       <div className="relative">
         <input
           type="search"

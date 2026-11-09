@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProductBySlug, getRelatedProducts } from "@/lib/data/products";
@@ -6,6 +7,40 @@ import AddToCartButtons from "@/components/AddToCartButtons";
 import ImageGallery from "@/components/ImageGallery";
 import ProductGrid from "@/components/ProductGrid";
 import { Separator } from "@/components/ui/separator";
+import { SITE_NAME, absoluteUrl, truncate } from "@/lib/site";
+
+type Props = { params: Promise<{ slug: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
+  if (!product) return { title: "Product not found", robots: { index: false } };
+
+  const details = product.description
+    ? product.description
+        .split(/\n+/)
+        .map((l) => l.replace(/^\s*[-•*]\s*/, "").trim())
+        .filter(Boolean)
+        .join(", ")
+    : `Genuine ${product.brand.name} ${product.category.name.toLowerCase()} with doorstep delivery and secure checkout.`;
+  const description = truncate(`Buy the ${product.name} for ${formatNaira(product.price)} at ${SITE_NAME}. ${details}`, 200);
+  const title = `${product.name} · ${formatNaira(product.price)}`;
+  const url = `/products/${product.slug}`;
+
+  return {
+    title: product.name,
+    description,
+    alternates: { canonical: url },
+    openGraph: { type: "website", url, title, description },
+    twitter: { card: "summary_large_image", title, description },
+    other: {
+      "product:price:amount": String(product.price),
+      "product:price:currency": product.currency || "NGN",
+      "product:brand": product.brand.name,
+      "product:category": product.category.name,
+    },
+  };
+}
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -18,6 +53,28 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            name: product.name,
+            image: [...product.product_images].sort((a, b) => a.position - b.position).map((i) => i.url),
+            description: product.description ?? undefined,
+            brand: { "@type": "Brand", name: product.brand.name },
+            category: product.category.name,
+            url: absoluteUrl(`/products/${product.slug}`),
+            offers: {
+              "@type": "Offer",
+              price: product.price,
+              priceCurrency: product.currency || "NGN",
+              availability: "https://schema.org/InStock",
+              url: absoluteUrl(`/products/${product.slug}`),
+            },
+          }).replace(/</g, "\\u003c"),
+        }}
+      />
       <nav className="mb-6 text-sm text-muted-foreground">
         <Link href="/products" className="hover:text-foreground">
           All products

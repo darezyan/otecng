@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { getOrderByReference, markOrderFailed, markOrderPaid } from "@/lib/data/orders";
+import { getOrderByReference, markOrderFailed } from "@/lib/data/orders";
+import { markPaidAndSendReceipt } from "@/lib/email/send";
 import { verifyTransaction } from "@/lib/squad";
 import { formatNaira } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -7,6 +9,8 @@ import ClearCartOnSuccess from "@/components/ClearCartOnSuccess";
 import type { Order, OrderItem } from "@/lib/supabase/types";
 
 type OrderWithItems = Order & { order_items: OrderItem[] };
+
+export const metadata: Metadata = { title: "Order status", robots: { index: false, follow: false } };
 
 export default async function CheckoutCallbackPage({
   searchParams,
@@ -46,7 +50,7 @@ export default async function CheckoutCallbackPage({
   const amountMatches = verified.amountKobo === Math.round(order.total * 100);
 
   if (verified.status === "success" && amountMatches) {
-    await markOrderPaid(reference);
+    await markPaidAndSendReceipt(reference);
     return <Success order={order} />;
   }
 

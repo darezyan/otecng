@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
 import { getFeaturedProducts } from "@/lib/data/products";
 import CartView from "@/components/CartView";
+
+export const metadata: Metadata = { title: "Your cart", robots: { index: false, follow: false } };
+export const revalidate = 3600;
 
 export default async function CartPage() {
   const suggestions = await getFeaturedProducts(4);
