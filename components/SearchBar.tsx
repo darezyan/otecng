@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search } from "lucide-react";
 
-export default function SearchBar() {
+export default function SearchBar({ className }: { className?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -20,21 +20,25 @@ export default function SearchBar() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="hidden flex-1 max-w-xl sm:block">
-      <div className="relative">
+    <form onSubmit={handleSubmit} role="search" className={className}>
+      <div className="relative flex">
+        <Search
+          className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
         <input
           type="search"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Search freezers, TVs, refrigerators..."
-          className="h-10 w-full rounded-full border bg-muted/40 pr-11 pl-4 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-background focus:ring-3 focus:ring-primary/20"
+          placeholder="Search freezers, TVs, refrigerators…"
+          aria-label="Search products"
+          className="h-11 w-full min-w-0 rounded-l-lg border border-r-0 bg-surface pr-3 pl-10 text-sm outline-none placeholder:text-muted-foreground focus:border-primary focus:bg-background"
         />
         <button
           type="submit"
-          aria-label="Search"
-          className="absolute top-1/2 right-1.5 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="h-11 shrink-0 rounded-r-lg bg-ink px-5 text-sm font-semibold text-white transition-colors hover:bg-ink-soft"
         >
-          <Search className="size-4" />
+          Search
         </button>
       </div>
     </form>

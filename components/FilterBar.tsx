@@ -16,9 +16,15 @@ function buildHref(base: Record<string, string | undefined>, overrides: Record<s
   return qs ? `/products?${qs}` : "/products";
 }
 
+const headingClass = "mb-3 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase";
+const optionClass = (active: boolean) =>
+  `block rounded-md px-2 py-1.5 transition-colors ${
+    active ? "bg-primary/10 font-semibold text-primary" : "text-foreground/75 hover:bg-muted hover:text-foreground"
+  }`;
+
 function CheckboxLink({ href, active, label }: { href: string; active: boolean; label: ReactNode }) {
   return (
-    <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+    <Link href={href} className="flex items-center gap-2.5 rounded-md px-2 py-1 text-foreground/75 hover:text-foreground">
       <span
         className={`flex size-4 shrink-0 items-center justify-center rounded border ${
           active ? "border-primary bg-primary text-primary-foreground" : "border-input"
@@ -51,14 +57,14 @@ export default function FilterBar({
   const current = { category: activeCategory, brand: activeBrand, size: activeSize, price: activePrice };
 
   return (
-    <aside className="w-full shrink-0 space-y-6 lg:w-56">
+    <div className="space-y-6">
       <div>
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Category</h3>
-        <ul className="space-y-1 text-sm">
+        <h3 className={headingClass}>Category</h3>
+        <ul className="space-y-0.5 text-sm">
           <li>
             <Link
               href={buildHref(current, { category: undefined, size: undefined })}
-              className={!activeCategory ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"}
+              className={optionClass(!activeCategory)}
             >
               All categories
             </Link>
@@ -70,11 +76,7 @@ export default function FilterBar({
                   category: category.slug,
                   size: category.slug === "refrigerators" ? activeSize : undefined,
                 })}
-                className={
-                  activeCategory === category.slug
-                    ? "font-semibold text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }
+                className={optionClass(activeCategory === category.slug)}
               >
                 {category.name}
               </Link>
@@ -86,8 +88,8 @@ export default function FilterBar({
       <Separator />
 
       <div>
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Price</h3>
-        <ul className="space-y-1.5 text-sm">
+        <h3 className={headingClass}>Price</h3>
+        <ul className="space-y-0.5 text-sm">
           {PRICE_BRACKETS.map((bracket) => {
             const isActive = activePrice === bracket.value;
             return (
@@ -106,12 +108,12 @@ export default function FilterBar({
       <Separator />
 
       <div>
-        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Brand</h3>
-        <ul className="space-y-1 text-sm">
+        <h3 className={headingClass}>Brand</h3>
+        <ul className="space-y-0.5 text-sm">
           <li>
             <Link
               href={buildHref(current, { brand: undefined })}
-              className={!activeBrand ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"}
+              className={optionClass(!activeBrand)}
             >
               All brands
             </Link>
@@ -120,9 +122,7 @@ export default function FilterBar({
             <li key={brand.id}>
               <Link
                 href={buildHref(current, { brand: brand.slug })}
-                className={
-                  activeBrand === brand.slug ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"
-                }
+                className={optionClass(activeBrand === brand.slug)}
               >
                 {brand.name}
               </Link>
@@ -135,8 +135,8 @@ export default function FilterBar({
         <>
           <Separator />
           <div>
-            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Size</h3>
-            <ul className="space-y-1.5 text-sm">
+            <h3 className={headingClass}>Size</h3>
+            <ul className="space-y-0.5 text-sm">
               {sizes.map((size) => {
                 const isActive = activeSize === size.value;
                 return (
@@ -157,6 +157,6 @@ export default function FilterBar({
           </div>
         </>
       )}
-    </aside>
+    </div>
   );
 }

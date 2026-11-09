@@ -49,14 +49,18 @@ export async function createPendingOrder(input: NewOrderInput): Promise<Order> {
 // The `status = 'pending'` guard is the idempotency mechanism: the callback
 // page and the webhook can both race to mark the same order, and a webhook
 // can retry/redeliver — the second call always matches 0 rows and no-ops.
-export async function markOrderPaid(paystackReference: string): Promise<void> {
+// Returns true only for the call that actually flipped pending -> paid, so
+// exactly one caller sends the receipt email.
+export async function markOrderPaid(paystackReference: string): Promise<boolean> {
   const supabase = createServiceSupabaseClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("orders")
     .update({ status: "paid", paid_at: new Date().toISOString() })
     .eq("paystack_reference", paystackReference)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .select("id");
   if (error) throw error;
+  return (data ?? []).length > 0;
 }
 
 export async function markOrderFailed(paystackReference: string): Promise<void> {

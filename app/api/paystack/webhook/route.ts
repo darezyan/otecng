@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { markOrderFailed, markOrderPaid } from "@/lib/data/orders";
+import { markOrderFailed } from "@/lib/data/orders";
+import { markPaidAndSendReceipt } from "@/lib/email/send";
 import { verifyWebhookSignature } from "@/lib/paystack";
 
 export async function POST(request: NextRequest) {
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
   const event = JSON.parse(rawBody) as { event: string; data: { reference: string } };
 
   if (event.event === "charge.success") {
-    await markOrderPaid(event.data.reference);
+    await markPaidAndSendReceipt(event.data.reference);
   } else if (event.event === "charge.failed") {
     await markOrderFailed(event.data.reference);
   }

@@ -15,9 +15,10 @@ export default function CartView() {
 
   if (lines.length === 0) {
     return (
-      <div className="py-16 text-center">
-        <p className="text-muted-foreground">Your cart is empty.</p>
-        <Button className="mt-6" render={<Link href="/products">Shop all products</Link>} />
+      <div className="rounded-xl border border-dashed px-6 py-20 text-center">
+        <p className="font-medium text-foreground">Your cart is empty</p>
+        <p className="mt-1 text-sm text-muted-foreground">Browse our range and add something you like.</p>
+        <Button nativeButton={false} className="mt-6" render={<Link href="/products">Shop all products</Link>} />
       </div>
     );
   }
@@ -25,10 +26,10 @@ export default function CartView() {
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <div className="divide-y rounded-2xl border">
+        <div className="divide-y rounded-xl border">
           {lines.map((line) => (
             <div key={line.productId} className="flex gap-4 p-4">
-              <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
+              <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-surface">
                 {line.image ? (
                   <Image src={line.image} alt="" fill sizes="80px" className="object-contain p-2" />
                 ) : null}
@@ -79,15 +80,16 @@ export default function CartView() {
         </div>
       </div>
 
-      <div className="h-fit rounded-2xl border p-5">
-        <h2 className="text-sm font-semibold text-foreground">Order summary</h2>
+      <div className="h-fit rounded-xl border bg-surface p-6 lg:sticky lg:top-44">
+        <h2 className="font-heading text-base font-bold text-foreground">Order summary</h2>
         <Separator className="my-4" />
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
           <span className="font-medium text-foreground">{formatNaira(subtotal)}</span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">Delivery fee calculated at checkout.</p>
-        <Button className="mt-5 w-full" render={<Link href="/checkout">Proceed to checkout</Link>} />
+        <Button nativeButton={false} size="lg" className="mt-5 h-12 w-full text-sm font-semibold" render={<Link href="/checkout">Proceed to checkout</Link>} />
+        <p className="mt-3 text-center text-xs text-muted-foreground">Secure payment with Paystack</p>
       </div>
     </div>
   );

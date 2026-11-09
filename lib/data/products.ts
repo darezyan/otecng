@@ -273,3 +273,51 @@ export async function getHeroImages(): Promise<string[]> {
   );
   return results.filter((url): url is string => Boolean(url));
 }
+
+// Homepage "Shop by category" tiles: every category with a product count and
+// one representative photo.
+export type CategoryTile = { id: string; name: string; slug: string; count: number; image: string | null };
+
+export async function getCategoryTiles(): Promise<CategoryTile[]> {
+  const supabase = createSupabaseClient();
+  const categories = await getCategories();
+  const tiles = await Promise.all(
+    categories.map(async (category) => {
+      const [{ count }, { data: imageRow }] = await Promise.all([
+        supabase.from("products").select("id", { count: "exact", head: true }).eq("category_id", category.id),
+        supabase
+          .from("products")
+          .select("product_images(url, is_primary)")
+          .eq("category_id", category.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ]);
+      const images = (imageRow?.product_images ?? []) as { url: string; is_primary: boolean }[];
+      return {
+        ...category,
+        count: count ?? 0,
+        image: images.find((i) => i.is_primary)?.url ?? images[0]?.url ?? null,
+      };
+    })
+  );
+  return tiles.filter((t) => t.count > 0).sort((a, b) => b.count - a.count);
+}
+
+// For sitemap.xml: every product slug with its created_at, paged past
+// PostgREST's default 1000-row cap.
+export async function getAllProductSlugs(): Promise<{ slug: string; created_at: string }[]> {
+  const supabase = createSupabaseClient();
+  const out: { slug: string; created_at: string }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase
+      .from("products")
+      .select("slug, created_at")
+      .order("created_at", { ascending: false })
+      .range(from, from + 999);
+    if (error) throw error;
+    out.push(...((data ?? []) as { slug: string; created_at: string }[]));
+    if (!data || data.length < 1000) break;
+  }
+  return out;
+}
