@@ -85,7 +85,7 @@ export function renderReceiptEmail(order: OrderWithItems): { subject: string; ht
             <td style="padding:16px;font-size:12px;color:${muted};">Date paid<div style="margin-top:4px;font-size:14px;font-weight:600;color:${ink};">${formatDate(order.paid_at)}</div></td>
           </tr>
           <tr>
-            <td colspan="2" style="padding:0 16px 16px;font-size:12px;color:${muted};">Payment reference<div style="margin-top:4px;font-size:13px;color:${ink};word-break:break-all;">${esc(order.paystack_reference)}</div></td>
+            <td colspan="2" style="padding:0 16px 16px;font-size:12px;color:${muted};">Payment reference<div style="margin-top:4px;font-size:13px;color:${ink};word-break:break-all;">${esc(order.payment_reference)}</div></td>
           </tr>
         </table>
       </td></tr>
@@ -129,7 +129,7 @@ export function renderReceiptEmail(order: OrderWithItems): { subject: string; ht
       </td></tr>
 
       <tr><td style="background:#f7f8fa;padding:20px 32px;font-size:11px;line-height:17px;color:${muted};text-align:center;">
-        &copy; ${new Date().getFullYear()} ${SITE_NAME} · Payments processed securely by Paystack.<br>
+        &copy; ${new Date().getFullYear()} ${SITE_NAME} · Payments processed securely by Squad by GTCO.<br>
         All prices in Nigerian Naira (NGN).
       </td></tr>
     </table>
@@ -143,7 +143,7 @@ export function renderReceiptEmail(order: OrderWithItems): { subject: string; ht
     ``,
     `Order number: ${number}`,
     `Date paid: ${formatDate(order.paid_at)}`,
-    `Payment reference: ${order.paystack_reference}`,
+    `Payment reference: ${order.payment_reference}`,
     ``,
     ...order.order_items.map(
       (i) => `${i.product_name}  x${i.qty}  ${formatNaira(i.product_price * i.qty)}`

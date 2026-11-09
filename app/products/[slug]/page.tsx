@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             .map((l) => l.replace(/^\s*[-•*]\s*/, "").trim())
             .filter(Boolean)
             .join(", ")
-        : `Genuine ${product.brand.name} ${product.category.name.toLowerCase()} with doorstep delivery and secure Paystack checkout.`
+        : `Genuine ${product.brand.name} ${product.category.name.toLowerCase()} with doorstep delivery and secure checkout with Squad by GTCO.`
     }`,
     200
   );

@@ -22,7 +22,7 @@ retail sites and re-hosted in our own Supabase Storage:
 
 Beyond browsing (listing, filters, search, product detail pages with image
 galleries), it now has **real ecommerce**: Add to Cart, a Buy Now shortcut,
-and actual payment collection via Paystack. **Still no user accounts** — that
+and actual payment collection via Squad. **Still no user accounts** — that
 was a deliberate choice (see the Cart/checkout section below), not an
 oversight.
 
@@ -60,7 +60,7 @@ Catalog — four tables, see `supabase/migrations/0001_init.sql`:
 RLS: anon key can `SELECT` on all four catalog tables, cannot write. Verified.
 
 Orders — two more tables, `supabase/migrations/0002_orders.sql`:
-- `orders` (id, status, paystack_reference, total, currency, customer_*,
+- `orders` (id, status, payment_reference, total, currency, customer_*,
   delivery_*, paid_at, created_at) — guest checkout, no `user_id`
 - `order_items` (id, order_id, product_id, product_name, product_price, qty)
   — `product_name`/`product_price` are snapshots at order time
@@ -189,7 +189,7 @@ the same upload logic (see conversation history / `storage.ts`).
   are cast via the `ProductWithRelations` type at the call site instead of
   fighting generated-type gymnastics.
 
-## Cart, Buy Now, and checkout (Paystack)
+## Cart, Buy Now, and checkout (Squad)
 
 Guest checkout only — **no accounts, no sign-in flow.** This was a deliberate
 call after briefly considering (and rejecting) required accounts: the
@@ -223,34 +223,34 @@ something to key a database cart on.
   (`app/api/checkout/route.ts`), which **recomputes the total server-side**
   from current DB prices — it never trusts a price the client's cart
   snapshot sends. It creates the order as `status: 'pending'` *before*
-  calling Paystack's Initialize Transaction, so a record exists even if the
-  customer abandons at Paystack's page. Amounts sent to Paystack are in
+  calling Squad's Initialize Transaction, so a record exists even if the
+  customer abandons at Squad's page. Amounts sent to Squad are in
   **kobo** (`Math.round(total * 100)`) — that conversion is the one classic
-  Paystack integration bug, called out explicitly in `lib/paystack.ts`.
-- **Redirect/hosted integration, no client-side Paystack SDK** —
+  Squad integration bug, called out explicitly in `lib/squad.ts`.
+- **Redirect/hosted integration, no client-side Squad SDK** —
   `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` doesn't exist and isn't needed, only
   `PAYSTACK_SECRET_KEY` (server-only). The browser is redirected straight to
   `authorization_url`; no card data ever touches this app.
 - **Two independent paths mark an order paid**, both idempotent via the same
   guard: `lib/data/orders.ts`'s `markOrderPaid`/`markOrderFailed` do
-  `UPDATE ... WHERE paystack_reference = $1 AND status = 'pending'` — a
+  `UPDATE ... WHERE payment_reference = $1 AND status = 'pending'` — a
   second call (retry, or both paths firing) matches 0 rows and no-ops.
-  1. `/checkout/callback` (Server Component) — Paystack redirects here after
+  1. `/checkout/callback` (Server Component) — Squad redirects here after
      payment; it calls Verify Transaction **server-side** (never trusts the
      redirect alone — a customer could hit this URL manually with a
      fabricated reference) and cross-checks the verified amount against the
      order's total before marking paid.
-  2. `POST /api/paystack/webhook` — the actual source of truth, independent
+  2. `POST /api/squad/webhook` — the actual source of truth, independent
      of whether the customer's browser ever returns. Reads the **raw**
      request body (`await request.text()`, not pre-parsed JSON) to verify
-     the `x-paystack-signature` HMAC-SHA512 header before doing anything
+     the `x-squad-encrypted-body` HMAC-SHA512 header before doing anything
      else; that signature check is the endpoint's *only* auth, rejecting
-     with 401 on mismatch. Needs a public URL to receive Paystack's calls —
+     with 401 on mismatch. Needs a public URL to receive Squad's calls —
      `localhost` isn't reachable, use `ngrok http 3000` (or similar) and
-     register that URL in the Paystack dashboard when testing this end.
+     register that URL in the Squad dashboard when testing this end.
 - **Cart clearing is deferred to success, not submission**:
   `components/ClearCartOnSuccess.tsx` runs only inside the callback page's
-  success branch (not before the Paystack redirect), so an abandoned or
+  success branch (not before the Squad redirect), so an abandoned or
   declined payment leaves the cart/buy-now state intact for retry. It
   distinguishes "was this Buy Now or the real cart" by checking whether
   `otecng:buyNow` sessionStorage is still present — if so it clears only
@@ -258,7 +258,7 @@ something to key a database cart on.
   would either wipe an unrelated cart on a Buy Now purchase, or leave stale
   items after a real cart checkout.
 - **`app/api/checkout/route.ts` wraps its entire body in one `try/catch`.**
-  An earlier version only wrapped the Paystack call — when the `orders`
+  An earlier version only wrapped the Squad call — when the `orders`
   table didn't exist yet (before the migration had been run), the
   `createPendingOrder` throw went unhandled and Next returned its generic
   HTML 500 page instead of JSON, which broke `CheckoutForm`'s `res.json()`

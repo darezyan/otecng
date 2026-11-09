@@ -115,7 +115,9 @@ async function main() {
   const fouani = await fetchFouaniProducts(existing);
   console.log(`Fouani: ${fouani.length} new products found`);
 
-  console.log("\nFetching Jumia catalog (Thermocool — all categories, Snowsea — freezers only)...");
+  console.log(
+    "\nFetching Jumia catalog (Thermocool/Bruhm/Tamashi/MeWe — see JUMIA_BRAND_SOURCES in jumia.ts for per-brand scope, Snowsea — freezers only)..."
+  );
   const jumia = await fetchJumiaProducts(existing);
   console.log(`Jumia: ${jumia.length} new products found`);
 

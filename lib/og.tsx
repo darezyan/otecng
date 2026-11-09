@@ -153,7 +153,7 @@ export function BrandCard({
           )}
         </div>
         <div style={{ display: "flex", fontSize: 20, fontWeight: 500, color: "rgba(255,255,255,0.55)" }}>
-          {footer ?? (image ? "Secure Paystack checkout · Doorstep delivery" : "Genuine appliances · Secure Paystack checkout · Doorstep delivery")}
+          {footer ?? (image ? "Secure checkout · Doorstep delivery" : "Genuine appliances · Secure checkout · Doorstep delivery")}
         </div>
       </div>
       {image && (

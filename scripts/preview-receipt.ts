@@ -6,7 +6,7 @@ import { renderReceiptEmail } from "../lib/email/receipt";
 const { subject, html } = renderReceiptEmail({
   id: "3f9c2a71-5b0e-4c8d-9a1e-2b7f6d4c8e10",
   status: "paid",
-  paystack_reference: "otecng_7e2b1c94-0d5a-4f3e-8b6c-1a9d2e4f7c30",
+  payment_reference: "otecng_7e2b1c94-0d5a-4f3e-8b6c-1a9d2e4f7c30",
   total: 2_743_000,
   currency: "NGN",
   customer_name: "Adaeze Okafor",

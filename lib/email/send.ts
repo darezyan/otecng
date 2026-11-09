@@ -36,12 +36,12 @@ async function sendEmail(input: { to: string; subject: string; html: string; tex
  * the callback page and the webhook: the loser of the race no-ops.
  * Email failures are logged, never thrown, so they can't fail a payment.
  */
-export async function markPaidAndSendReceipt(paystackReference: string): Promise<void> {
-  const transitioned = await markOrderPaid(paystackReference);
+export async function markPaidAndSendReceipt(paymentReference: string): Promise<void> {
+  const transitioned = await markOrderPaid(paymentReference);
   if (!transitioned) return;
 
   try {
-    const order = await getOrderByReference(paystackReference);
+    const order = await getOrderByReference(paymentReference);
     if (!order) return;
     const { subject, html, text } = renderReceiptEmail(order);
     await sendEmail({
@@ -52,6 +52,6 @@ export async function markPaidAndSendReceipt(paystackReference: string): Promise
       bcc: process.env.STORE_ORDER_EMAIL || undefined,
     });
   } catch (err) {
-    console.error(`[email] receipt for ${paystackReference} failed:`, err);
+    console.error(`[email] receipt for ${paymentReference} failed:`, err);
   }
 }

@@ -2,9 +2,9 @@ import {
   getProducts,
   getCategories,
   getBrands,
-  getRefrigeratorSizeFacets,
+  getSizeFacets,
   PRICE_BRACKETS,
-  REFRIGERATOR_SIZE_BRACKETS,
+  SIZE_FILTER_CATEGORIES,
 } from "@/lib/data/products";
 import { getPaginationRange } from "@/lib/pagination";
 import type { Metadata } from "next";
@@ -43,7 +43,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
           ? `${brand.name} appliances`
           : "Shop all appliances";
   const description = params.q
-    ? `Search results for "${params.q}" at ${SITE_NAME}. Genuine appliances, secure Paystack checkout and doorstep delivery.`
+    ? `Search results for "${params.q}" at ${SITE_NAME}. Genuine appliances, secure checkout with Squad by GTCO and doorstep delivery.`
     : `Shop ${[brand?.name, category?.name.toLowerCase() ?? "home appliances"].filter(Boolean).join(" ")} at ${SITE_NAME}. Genuine products from trusted brands, with secure checkout and doorstep delivery in Nigeria.`;
 
   const canonical = new URLSearchParams();
@@ -85,7 +85,9 @@ export default async function ProductsPage({
     }),
     getCategories(),
     getBrands(),
-    params.category === "refrigerators" ? getRefrigeratorSizeFacets() : Promise.resolve(undefined),
+    params.category && SIZE_FILTER_CATEGORIES.includes(params.category)
+      ? getSizeFacets(params.category)
+      : Promise.resolve(undefined),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));
@@ -125,7 +127,7 @@ export default async function ProductsPage({
     params.price && { key: "price", label: PRICE_BRACKETS.find((b) => b.value === params.price)?.label ?? params.price },
     params.size && {
       key: "size",
-      label: REFRIGERATOR_SIZE_BRACKETS.find((b) => b.value === params.size)?.label ?? params.size,
+      label: sizes?.find((b) => b.value === params.size)?.label ?? params.size,
     },
   ].filter((c): c is { key: string; label: string } => Boolean(c));
 

@@ -2,7 +2,7 @@ import { createServiceSupabaseClient } from "@/lib/supabase/serviceClient";
 import type { Order, OrderItem } from "@/lib/supabase/types";
 
 export type NewOrderInput = {
-  paystackReference: string;
+  paymentReference: string;
   total: number;
   customerName: string;
   customerEmail: string;
@@ -19,7 +19,7 @@ export async function createPendingOrder(input: NewOrderInput): Promise<Order> {
     .from("orders")
     .insert({
       status: "pending",
-      paystack_reference: input.paystackReference,
+      payment_reference: input.paymentReference,
       total: input.total,
       customer_name: input.customerName,
       customer_email: input.customerEmail,
@@ -51,36 +51,36 @@ export async function createPendingOrder(input: NewOrderInput): Promise<Order> {
 // can retry/redeliver — the second call always matches 0 rows and no-ops.
 // Returns true only for the call that actually flipped pending -> paid, so
 // exactly one caller sends the receipt email.
-export async function markOrderPaid(paystackReference: string): Promise<boolean> {
+export async function markOrderPaid(paymentReference: string): Promise<boolean> {
   const supabase = createServiceSupabaseClient();
   const { data, error } = await supabase
     .from("orders")
     .update({ status: "paid", paid_at: new Date().toISOString() })
-    .eq("paystack_reference", paystackReference)
+    .eq("payment_reference", paymentReference)
     .eq("status", "pending")
     .select("id");
   if (error) throw error;
   return (data ?? []).length > 0;
 }
 
-export async function markOrderFailed(paystackReference: string): Promise<void> {
+export async function markOrderFailed(paymentReference: string): Promise<void> {
   const supabase = createServiceSupabaseClient();
   const { error } = await supabase
     .from("orders")
     .update({ status: "failed" })
-    .eq("paystack_reference", paystackReference)
+    .eq("payment_reference", paymentReference)
     .eq("status", "pending");
   if (error) throw error;
 }
 
 export async function getOrderByReference(
-  paystackReference: string
+  paymentReference: string
 ): Promise<(Order & { order_items: OrderItem[] }) | null> {
   const supabase = createServiceSupabaseClient();
   const { data, error } = await supabase
     .from("orders")
     .select("*, order_items(*)")
-    .eq("paystack_reference", paystackReference)
+    .eq("payment_reference", paymentReference)
     .maybeSingle();
   if (error) throw error;
   return (data as unknown as (Order & { order_items: OrderItem[] })) ?? null;

@@ -3,7 +3,7 @@ import { BadgeCheck, CreditCard, Headphones, Truck } from "lucide-react";
 const ITEMS = [
   { icon: BadgeCheck, title: "Genuine products", body: "Original units from authorised brands" },
   { icon: Truck, title: "Doorstep delivery", body: "We deliver to your home or office" },
-  { icon: CreditCard, title: "Secure checkout", body: "Card, transfer & USSD via Paystack" },
+  { icon: CreditCard, title: "Secure checkout", body: "Card, transfer & USSD via Squad" },
   { icon: Headphones, title: "Real support", body: "Help before and after you buy" },
 ];
 

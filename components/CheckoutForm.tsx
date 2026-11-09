@@ -162,7 +162,7 @@ export default function CheckoutForm() {
         </div>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <p className="mt-3 text-center text-xs text-muted-foreground">
-          You&apos;ll complete payment on Paystack. A receipt is emailed to you once it succeeds.
+          You&apos;ll complete payment securely on Squad by GTCO. A receipt is emailed to you once it succeeds.
         </p>
         <Button type="submit" size="lg" className="mt-5 h-12 w-full text-sm font-semibold" disabled={submitting}>
           {submitting ? "Starting payment…" : `Pay ${formatNaira(subtotal)} securely`}

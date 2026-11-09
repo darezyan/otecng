@@ -3,8 +3,9 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import type { Brand, Category } from "@/lib/supabase/types";
 import type { SizeFacet } from "@/lib/data/products";
-import { PRICE_BRACKETS } from "@/lib/data/products";
+import { PRICE_BRACKETS, SIZE_FILTER_CATEGORIES } from "@/lib/data/products";
 import { Separator } from "@/components/ui/separator";
+import LinkPendingHint from "@/components/LinkPendingHint";
 
 function buildHref(base: Record<string, string | undefined>, overrides: Record<string, string | undefined>) {
   const params = new URLSearchParams();
@@ -18,7 +19,7 @@ function buildHref(base: Record<string, string | undefined>, overrides: Record<s
 
 const headingClass = "mb-3 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase";
 const optionClass = (active: boolean) =>
-  `block rounded-md px-2 py-1.5 transition-colors ${
+  `flex items-center rounded-md px-2 py-1.5 transition-colors ${
     active ? "bg-primary/10 font-semibold text-primary" : "text-foreground/75 hover:bg-muted hover:text-foreground"
   }`;
 
@@ -33,6 +34,7 @@ function CheckboxLink({ href, active, label }: { href: string; active: boolean; 
         {active && <Check className="size-3" />}
       </span>
       <span className={active ? "font-medium text-foreground" : undefined}>{label}</span>
+      <LinkPendingHint />
     </Link>
   );
 }
@@ -67,6 +69,7 @@ export default function FilterBar({
               className={optionClass(!activeCategory)}
             >
               All categories
+              <LinkPendingHint />
             </Link>
           </li>
           {categories.map((category) => (
@@ -74,11 +77,12 @@ export default function FilterBar({
               <Link
                 href={buildHref(current, {
                   category: category.slug,
-                  size: category.slug === "refrigerators" ? activeSize : undefined,
+                  size: SIZE_FILTER_CATEGORIES.includes(category.slug) ? activeSize : undefined,
                 })}
                 className={optionClass(activeCategory === category.slug)}
               >
                 {category.name}
+                <LinkPendingHint />
               </Link>
             </li>
           ))}
@@ -116,6 +120,7 @@ export default function FilterBar({
               className={optionClass(!activeBrand)}
             >
               All brands
+              <LinkPendingHint />
             </Link>
           </li>
           {brands.map((brand) => (
@@ -125,13 +130,14 @@ export default function FilterBar({
                 className={optionClass(activeBrand === brand.slug)}
               >
                 {brand.name}
+                <LinkPendingHint />
               </Link>
             </li>
           ))}
         </ul>
       </div>
 
-      {activeCategory === "refrigerators" && sizes && sizes.length > 0 && (
+      {sizes && sizes.length > 0 && (
         <>
           <Separator />
           <div>

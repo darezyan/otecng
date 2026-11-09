@@ -2,23 +2,39 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, X } from "lucide-react";
+import { Minus, Plus, ShoppingCart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/lib/cart/CartProvider";
 import { formatNaira } from "@/lib/format";
+import type { ProductWithRelations } from "@/lib/supabase/types";
+import ProductGrid from "@/components/ProductGrid";
 
-export default function CartView() {
+export default function CartView({ suggestions = [] }: { suggestions?: ProductWithRelations[] }) {
   const { hydrated, lines, subtotal, setQty, remove } = useCart();
 
   if (!hydrated) return null;
 
   if (lines.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed px-6 py-20 text-center">
-        <p className="font-medium text-foreground">Your cart is empty</p>
-        <p className="mt-1 text-sm text-muted-foreground">Browse our range and add something you like.</p>
-        <Button nativeButton={false} className="mt-6" render={<Link href="/products">Shop all products</Link>} />
+      <div>
+        <div className="flex flex-col items-center rounded-xl border border-dashed py-16 text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-muted">
+            <ShoppingCart className="size-7 text-muted-foreground" />
+          </div>
+          <h2 className="mt-5 font-heading text-lg font-bold text-foreground">Your cart is empty</h2>
+          <p className="mt-1.5 max-w-xs text-sm text-muted-foreground">
+            Looks like you haven&apos;t added anything yet. Start shopping and we&apos;ll keep it right here for you.
+          </p>
+          <Button nativeButton={false} size="lg" className="mt-6 h-11 px-5 font-semibold" render={<Link href="/products">Shop all products</Link>} />
+        </div>
+
+        {suggestions.length > 0 && (
+          <section className="mt-14">
+            <h2 className="mb-5 font-heading text-xl font-bold text-foreground sm:text-2xl">You might like</h2>
+            <ProductGrid products={suggestions} />
+          </section>
+        )}
       </div>
     );
   }
@@ -89,7 +105,7 @@ export default function CartView() {
         </div>
         <p className="mt-1 text-xs text-muted-foreground">Delivery fee calculated at checkout.</p>
         <Button nativeButton={false} size="lg" className="mt-5 h-12 w-full text-sm font-semibold" render={<Link href="/checkout">Proceed to checkout</Link>} />
-        <p className="mt-3 text-center text-xs text-muted-foreground">Secure payment with Paystack</p>
+        <p className="mt-3 text-center text-xs text-muted-foreground">Secure payment with Squad by GTCO</p>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { CircleCheck, CircleX } from "lucide-react";
 import { getOrderByReference, markOrderFailed } from "@/lib/data/orders";
 import { markPaidAndSendReceipt } from "@/lib/email/send";
 import { orderNumber } from "@/lib/email/receipt";
-import { verifyTransaction } from "@/lib/paystack";
+import { verifyTransaction } from "@/lib/squad";
 import { formatNaira } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import ClearCartOnSuccess from "@/components/ClearCartOnSuccess";
@@ -17,22 +17,31 @@ export const metadata: Metadata = { title: "Order status", robots: { index: fals
 export default async function CheckoutCallbackPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reference?: string; trxref?: string }>;
+  // Squad's docs confirm the reference comes back as a query param on the
+  // callback redirect but don't pin down the exact key — check the
+  // plausible variants (their own request/response fields use
+  // "transaction_ref"; "reference"/"trxref" are common gateway conventions).
+  searchParams: Promise<{ transaction_ref?: string; reference?: string; trxref?: string }>;
 }) {
-  const { reference: refParam, trxref } = await searchParams;
-  const reference = refParam ?? trxref;
+  const params = await searchParams;
+  const reference = params.transaction_ref ?? params.reference ?? params.trxref;
 
   if (!reference) {
     return <Failure message="No payment reference was provided." />;
   }
 
-  // Never trust the redirect alone — verify server-side against Paystack
+  // Never trust the redirect alone — verify server-side against Squad
   // before treating anything as paid.
   let verified;
   try {
     verified = await verifyTransaction(reference);
   } catch {
-    return <Failure message="We couldn't verify this payment. If you were charged, contact support with your reference." reference={reference} />;
+    return (
+      <Failure
+        message="We couldn't verify this payment. If you were charged, contact support with your reference."
+        reference={reference}
+      />
+    );
   }
 
   const order = await getOrderByReference(reference);
@@ -40,9 +49,9 @@ export default async function CheckoutCallbackPage({
     return <Failure message="We couldn't find an order for this payment." reference={reference} />;
   }
 
-  const amountMatches = verified.data.amount === Math.round(order.total * 100);
+  const amountMatches = verified.amountKobo === Math.round(order.total * 100);
 
-  if (verified.data.status === "success" && amountMatches) {
+  if (verified.status === "success" && amountMatches) {
     await markPaidAndSendReceipt(reference);
     return <Success order={order} />;
   }
@@ -72,7 +81,7 @@ function Success({ order }: { order: OrderWithItems }) {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Payment reference</p>
-            <p className="mt-0.5 truncate font-medium text-foreground">{order.paystack_reference}</p>
+            <p className="mt-0.5 truncate font-medium text-foreground">{order.payment_reference}</p>
           </div>
         </div>
         <div className="divide-y px-5">

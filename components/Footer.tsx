@@ -15,7 +15,7 @@ export default async function Footer() {
             delivered to your door.
           </p>
           <p className="mt-6 inline-flex items-center gap-2 rounded-md border border-white/15 px-3 py-1.5 text-xs">
-            Payments secured by <span className="font-semibold text-white">Paystack</span>
+            Payments secured by <span className="font-semibold text-white">Squad by GTCO</span>
           </p>
         </div>
 
