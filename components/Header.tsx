@@ -27,11 +27,20 @@ export default function Header() {
 
         <Link
           href="/products"
-          className="ml-auto shrink-0 text-sm font-medium text-muted-foreground hover:text-foreground"
+          className="ml-auto hidden shrink-0 text-sm font-medium text-muted-foreground hover:text-foreground sm:block"
         >
           All products
         </Link>
-        <CartBadge />
+        <div className="ml-auto sm:ml-0">
+          <CartBadge />
+        </div>
+      </div>
+
+      {/* Phones: full-width search under the logo row */}
+      <div className="px-4 pb-3 sm:hidden">
+        <Suspense fallback={<div className="h-10" />}>
+          <SearchBar className="w-full" />
+        </Suspense>
       </div>
 
       {/* Row 2: category + brand navigation. Every dropdown panel is

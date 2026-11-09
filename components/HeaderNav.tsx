@@ -37,7 +37,34 @@ export default async function HeaderNav() {
   );
 
   return (
-    <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <>
+      {/* Phones/small tablets: one swipeable row of plain links. Hover
+          mega-menus don't work with touch, and wrapping them onto three
+          lines ate a third of the screen under the sticky header. */}
+      <nav aria-label="Categories" className="border-t lg:hidden">
+        <ul className="no-scrollbar flex gap-1 overflow-x-auto px-2.5">
+          {[...priority, ...rest].map((category) => (
+            <li key={category.id} className="shrink-0">
+              <Link
+                href={`/products?category=${category.slug}`}
+                className="block px-2 py-2.5 text-sm font-medium whitespace-nowrap text-foreground/80 hover:text-foreground"
+              >
+                {category.name}
+              </Link>
+            </li>
+          ))}
+          <li className="shrink-0">
+            <Link
+              href="/products"
+              className="block px-2 py-2.5 text-sm font-medium whitespace-nowrap text-foreground/80 hover:text-foreground"
+            >
+              All products
+            </Link>
+          </li>
+        </ul>
+      </nav>
+
+    <div className="relative mx-auto hidden max-w-7xl px-4 sm:px-6 lg:block lg:px-8">
       <NavAutoClose>
         <nav className="flex flex-wrap items-center gap-1 py-1">
           {priorityMenus.map(({ category, brands: categoryBrands, thumbnail, sizes }) => (
@@ -140,5 +167,6 @@ export default async function HeaderNav() {
         </nav>
       </NavAutoClose>
     </div>
+    </>
   );
 }
