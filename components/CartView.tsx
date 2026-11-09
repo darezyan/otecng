@@ -18,7 +18,7 @@ export default function CartView({ suggestions = [] }: { suggestions?: ProductWi
   if (lines.length === 0) {
     return (
       <div>
-        <div className="flex flex-col items-center rounded-xl border border-dashed py-16 text-center">
+        <div className="flex flex-col items-center rounded-2xl border bg-card py-16 text-center">
           <div className="flex size-16 items-center justify-center rounded-full bg-muted">
             <ShoppingCart className="size-7 text-muted-foreground" />
           </div>
@@ -26,12 +26,12 @@ export default function CartView({ suggestions = [] }: { suggestions?: ProductWi
           <p className="mt-1.5 max-w-xs text-sm text-muted-foreground">
             Looks like you haven&apos;t added anything yet. Start shopping and we&apos;ll keep it right here for you.
           </p>
-          <Button nativeButton={false} size="lg" className="mt-6 h-11 px-5 font-semibold" render={<Link href="/products">Shop all products</Link>} />
+          <Button className="mt-6" render={<Link href="/products">Shop all products</Link>} />
         </div>
 
         {suggestions.length > 0 && (
           <section className="mt-14">
-            <h2 className="mb-5 font-heading text-xl font-bold text-foreground sm:text-2xl">You might like</h2>
+            <h2 className="mb-4 font-heading text-lg font-bold text-foreground">You might like</h2>
             <ProductGrid products={suggestions} />
           </section>
         )}
@@ -42,10 +42,10 @@ export default function CartView({ suggestions = [] }: { suggestions?: ProductWi
   return (
     <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
       <div className="lg:col-span-2">
-        <div className="divide-y rounded-xl border">
+        <div className="divide-y rounded-2xl border">
           {lines.map((line) => (
             <div key={line.productId} className="flex gap-4 p-4">
-              <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-surface">
+              <div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-zinc-100">
                 {line.image ? (
                   <Image src={line.image} alt="" fill sizes="80px" className="object-contain p-2" />
                 ) : null}
@@ -96,16 +96,15 @@ export default function CartView({ suggestions = [] }: { suggestions?: ProductWi
         </div>
       </div>
 
-      <div className="h-fit rounded-xl border bg-surface p-6 lg:sticky lg:top-44">
-        <h2 className="font-heading text-base font-bold text-foreground">Order summary</h2>
+      <div className="h-fit rounded-2xl border p-5">
+        <h2 className="text-sm font-semibold text-foreground">Order summary</h2>
         <Separator className="my-4" />
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
           <span className="font-medium text-foreground">{formatNaira(subtotal)}</span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">Delivery fee calculated at checkout.</p>
-        <Button nativeButton={false} size="lg" className="mt-5 h-12 w-full text-sm font-semibold" render={<Link href="/checkout">Proceed to checkout</Link>} />
-        <p className="mt-3 text-center text-xs text-muted-foreground">Secure payment with Squad by GTCO</p>
+        <Button className="mt-5 w-full" render={<Link href="/checkout">Proceed to checkout</Link>} />
       </div>
     </div>
   );

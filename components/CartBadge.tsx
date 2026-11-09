@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/lib/cart/CartProvider";
 
 export default function CartBadge() {
@@ -10,18 +10,15 @@ export default function CartBadge() {
   return (
     <Link
       href="/cart"
-      aria-label={hydrated && count > 0 ? `Cart, ${count} items` : "Cart"}
-      className="relative flex h-10 shrink-0 items-center gap-2 rounded-md px-2.5 text-sm font-medium text-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+      aria-label="Cart"
+      className="relative flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
     >
-      <span className="relative">
-        <ShoppingBag className="size-5" />
-        {hydrated && count > 0 && (
-          <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-            {count > 99 ? "99+" : count}
-          </span>
-        )}
-      </span>
-      <span className="hidden md:inline">Cart</span>
+      <ShoppingCart className="size-5" />
+      {hydrated && count > 0 && (
+        <span className="absolute top-0.5 right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
     </Link>
   );
 }

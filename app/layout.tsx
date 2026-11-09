@@ -63,7 +63,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#141a2b",
+  themeColor: "#09090b",
   colorScheme: "light",
 };
 
@@ -75,7 +75,7 @@ const orgJsonLd = {
       "@id": absoluteUrl("/#store"),
       name: SITE_NAME,
       url: absoluteUrl("/"),
-      logo: absoluteUrl("/icon.svg"),
+      logo: absoluteUrl("/opengraph-image"),
       description: SITE_DESCRIPTION,
       currenciesAccepted: "NGN",
       areaServed: { "@type": "Country", name: "Nigeria" },

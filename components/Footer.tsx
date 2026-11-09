@@ -1,71 +1,16 @@
-import Link from "next/link";
-import { getBrands, getCategories } from "@/lib/data/products";
-import Logo from "./Logo";
-
-export default async function Footer() {
-  const [categories, brands] = await Promise.all([getCategories(), getBrands()]);
-
+export default function Footer() {
   return (
-    <footer className="mt-20 bg-ink text-white/70">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-12 lg:px-8">
-        <div className="md:col-span-4">
-          <Logo inverted />
-          <p className="mt-4 max-w-xs text-sm leading-6">
-            Original freezers, refrigerators, TVs, air conditioners and home appliances from brands you trust,
-            delivered to your door.
-          </p>
-          <p className="mt-6 inline-flex items-center gap-2 rounded-md border border-white/15 px-3 py-1.5 text-xs">
-            Payments secured by <span className="font-semibold text-white">Squad by GTCO</span>
-          </p>
+    <footer className="mt-16 border-t bg-background">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="font-heading text-xl font-extrabold tracking-tight text-foreground">
+          otec<span className="text-primary">ng</span>
         </div>
-
-        <div className="md:col-span-4">
-          <h2 className="text-xs font-semibold tracking-[0.08em] text-white uppercase">Shop by category</h2>
-          <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-            {categories.map((c) => (
-              <li key={c.id}>
-                <Link href={`/products?category=${c.slug}`} className="transition-colors hover:text-white">
-                  {c.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="md:col-span-2">
-          <h2 className="text-xs font-semibold tracking-[0.08em] text-white uppercase">Brands</h2>
-          <ul className="mt-4 space-y-2 text-sm">
-            {brands.map((b) => (
-              <li key={b.id}>
-                <Link href={`/products?brand=${b.slug}`} className="transition-colors hover:text-white">
-                  {b.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="md:col-span-2">
-          <h2 className="text-xs font-semibold tracking-[0.08em] text-white uppercase">Shop</h2>
-          <ul className="mt-4 space-y-2 text-sm">
-            <li>
-              <Link href="/products" className="transition-colors hover:text-white">
-                All products
-              </Link>
-            </li>
-            <li>
-              <Link href="/cart" className="transition-colors hover:text-white">
-                Your cart
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-6 text-xs sm:flex-row sm:justify-between sm:px-6 lg:px-8">
-          <p>&copy; {new Date().getFullYear()} otecng. All rights reserved.</p>
-          <p>All prices in Nigerian Naira (NGN), VAT inclusive where applicable.</p>
-        </div>
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+          Freezers, refrigerators, TVs, air conditioners and appliances for every home.
+        </p>
+        <p className="mt-6 text-xs text-muted-foreground">
+          &copy; {new Date().getFullYear()} otecng. All prices in Nigerian Naira (NGN).
+        </p>
       </div>
     </footer>
   );

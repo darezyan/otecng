@@ -5,11 +5,11 @@ import sharp from "sharp";
 // Shared bits for every generated social preview image (Open Graph / Twitter).
 export const OG_SIZE = { width: 1200, height: 630 };
 export const OG_COLORS = {
-  ink: "#141a2b",
-  inkSoft: "#222a3f",
-  orange: "#e2611d",
-  muted: "#98a2b3",
-  surface: "#f5f6f8",
+  ink: "#09090b",
+  inkSoft: "#18181b",
+  orange: "#f54a00",
+  muted: "#a1a1aa",
+  surface: "#f4f4f5",
 };
 
 let fontsPromise: Promise<{ name: string; data: Buffer; weight: 500 | 800; style: "normal" }[]> | null = null;
@@ -47,23 +47,16 @@ export async function toPngDataUri(url: string | null | undefined, maxSize = 900
 
 export function Wordmark({ size = 40, inverted = true }: { size?: number; inverted?: boolean }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: size * 0.3 }}>
-      <svg width={size} height={size} viewBox="0 0 32 32">
-        <rect width="32" height="32" rx="8" fill={inverted ? "#ffffff" : OG_COLORS.ink} />
-        <circle cx="16" cy="16" r="7.5" fill="none" stroke={OG_COLORS.orange} strokeWidth="3.5" />
-        <circle cx="16" cy="16" r="2" fill={inverted ? OG_COLORS.ink : "#ffffff"} />
-      </svg>
-      <div
-        style={{
-          display: "flex",
-          fontSize: size * 0.82,
-          fontWeight: 800,
-          letterSpacing: -1,
-          color: inverted ? "#ffffff" : OG_COLORS.ink,
-        }}
-      >
-        otec<span style={{ color: OG_COLORS.orange }}>ng</span>
-      </div>
+    <div
+      style={{
+        display: "flex",
+        fontSize: size,
+        fontWeight: 800,
+        letterSpacing: -1,
+        color: inverted ? "#ffffff" : OG_COLORS.ink,
+      }}
+    >
+      otec<span style={{ color: OG_COLORS.orange }}>ng</span>
     </div>
   );
 }
@@ -101,7 +94,7 @@ export function BrandCard({
           width: 640,
           height: 640,
           borderRadius: 9999,
-          background: "rgba(226,97,29,0.28)",
+          background: "rgba(245,74,0,0.25)",
           filter: "blur(120px)",
         }}
       />

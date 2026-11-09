@@ -33,8 +33,8 @@ export function renderReceiptEmail(order: OrderWithItems): { subject: string; ht
   const number = orderNumber(order);
   const firstName = order.customer_name.trim().split(/\s+/)[0] || order.customer_name;
   const subject = `Your ${SITE_NAME} receipt · ${number}`;
-  const ink = "#141a2b";
-  const orange = "#e2611d";
+  const ink = "#09090b";
+  const orange = "#f54a00";
   const muted = "#667085";
   const border = "#e6e8ee";
 

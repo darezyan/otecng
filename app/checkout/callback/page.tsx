@@ -1,9 +1,7 @@
-import Link from "next/link";
 import type { Metadata } from "next";
-import { CircleCheck, CircleX } from "lucide-react";
+import Link from "next/link";
 import { getOrderByReference, markOrderFailed } from "@/lib/data/orders";
 import { markPaidAndSendReceipt } from "@/lib/email/send";
-import { orderNumber } from "@/lib/email/receipt";
 import { verifyTransaction } from "@/lib/squad";
 import { formatNaira } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -62,64 +60,46 @@ export default async function CheckoutCallbackPage({
 
 function Success({ order }: { order: OrderWithItems }) {
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8">
       <ClearCartOnSuccess />
-      <div className="text-center">
-        <CircleCheck className="mx-auto size-14 text-emerald-600" strokeWidth={1.5} aria-hidden />
-        <h1 className="mt-4 font-heading text-3xl font-bold text-foreground">Order confirmed</h1>
-        <p className="mt-2 text-muted-foreground">
-          Thanks, {order.customer_name.split(" ")[0]}. We&apos;ve received your payment and emailed a receipt to{" "}
-          <span className="font-medium text-foreground">{order.customer_email}</span>.
-        </p>
-      </div>
+      <h1 className="text-2xl font-bold text-foreground">Order confirmed</h1>
+      <p className="mt-2 text-muted-foreground">
+        Thanks, {order.customer_name} — we&apos;ve received your order.
+      </p>
 
-      <div className="mt-10 overflow-hidden rounded-xl border">
-        <div className="grid grid-cols-2 gap-4 bg-surface p-5 text-sm">
-          <div>
-            <p className="text-xs text-muted-foreground">Order number</p>
-            <p className="mt-0.5 font-semibold text-foreground">{orderNumber(order)}</p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Payment reference</p>
-            <p className="mt-0.5 truncate font-medium text-foreground">{order.payment_reference}</p>
-          </div>
+      <div className="mt-8 rounded-2xl border p-5 text-left">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Reference</span>
+          <span className="font-medium text-foreground">{order.payment_reference}</span>
         </div>
-        <div className="divide-y px-5">
+        <div className="mt-4 divide-y">
           {order.order_items.map((item) => (
-            <div key={item.id} className="flex items-start justify-between gap-4 py-3 text-sm">
+            <div key={item.id} className="flex items-center justify-between py-2 text-sm">
               <span className="text-foreground">
-                {item.product_name} <span className="text-muted-foreground">&times; {item.qty}</span>
+                {item.product_name} &times; {item.qty}
               </span>
-              <span className="shrink-0 font-medium text-foreground">{formatNaira(item.product_price * item.qty)}</span>
+              <span className="text-muted-foreground">{formatNaira(item.product_price * item.qty)}</span>
             </div>
           ))}
         </div>
-        <div className="flex items-center justify-between border-t px-5 py-4 font-semibold">
-          <span className="text-foreground">Total paid</span>
-          <span className="font-heading text-lg text-foreground">{formatNaira(order.total)}</span>
-        </div>
-        <div className="border-t px-5 py-4 text-sm text-muted-foreground">
-          Delivering to {order.delivery_address}, {order.delivery_city}, {order.delivery_state}. We&apos;ll call{" "}
-          {order.customer_phone} to arrange delivery.
+        <div className="mt-4 flex items-center justify-between border-t pt-4 text-sm font-semibold">
+          <span className="text-foreground">Total</span>
+          <span className="text-foreground">{formatNaira(order.total)}</span>
         </div>
       </div>
 
-      <div className="mt-8 text-center">
-        <Button nativeButton={false} size="lg" className="h-12 px-6 font-semibold" render={<Link href="/products">Continue shopping</Link>} />
-      </div>
+      <Button className="mt-8" render={<Link href="/products">Continue shopping</Link>} />
     </div>
   );
 }
 
 function Failure({ message, reference }: { message: string; reference?: string }) {
   return (
-    <div className="mx-auto max-w-xl px-4 py-20 text-center sm:px-6 lg:px-8">
-      <CircleX className="mx-auto size-14 text-destructive" strokeWidth={1.5} aria-hidden />
-      <h1 className="mt-4 font-heading text-3xl font-bold text-foreground">Payment not completed</h1>
+    <div className="mx-auto max-w-2xl px-4 py-16 text-center sm:px-6 lg:px-8">
+      <h1 className="text-2xl font-bold text-foreground">Payment not completed</h1>
       <p className="mt-2 text-muted-foreground">{message}</p>
-      {reference && <p className="mt-2 text-xs break-all text-muted-foreground">Reference: {reference}</p>}
-      <p className="mt-2 text-sm text-muted-foreground">Your cart has been kept so you can try again.</p>
-      <Button nativeButton={false} size="lg" className="mt-8 h-12 px-6 font-semibold" render={<Link href="/checkout">Try again</Link>} />
+      {reference && <p className="mt-1 text-xs text-muted-foreground">Reference: {reference}</p>}
+      <Button className="mt-8" render={<Link href="/checkout">Try again</Link>} />
     </div>
   );
 }

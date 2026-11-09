@@ -71,17 +71,14 @@ export default function CheckoutForm() {
   if (!hydrated && !isBuyNow) return null;
 
   if (lines.length === 0) {
-    return <p className="rounded-xl border border-dashed py-20 text-center text-muted-foreground">There&apos;s nothing to check out.</p>;
+    return <p className="py-16 text-center text-muted-foreground">There&apos;s nothing to check out.</p>;
   }
 
   return (
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-10 lg:grid-cols-3">
-      <div className="space-y-8 lg:col-span-2">
-        <fieldset className="space-y-4 rounded-xl border p-6">
-          <legend className="px-1 font-heading text-base font-bold text-foreground">Contact details</legend>
+      <div className="space-y-4 lg:col-span-2">
         <Field id="customerName" label="Full name">
           <Input
-            className="h-11"
             id="customerName"
             required
             value={info.customerName}
@@ -90,7 +87,6 @@ export default function CheckoutForm() {
         </Field>
         <Field id="customerEmail" label="Email">
           <Input
-            className="h-11"
             id="customerEmail"
             type="email"
             required
@@ -100,7 +96,6 @@ export default function CheckoutForm() {
         </Field>
         <Field id="customerPhone" label="Phone">
           <Input
-            className="h-11"
             id="customerPhone"
             type="tel"
             required
@@ -108,12 +103,8 @@ export default function CheckoutForm() {
             onChange={(e) => setInfo({ ...info, customerPhone: e.target.value })}
           />
         </Field>
-        </fieldset>
-        <fieldset className="space-y-4 rounded-xl border p-6">
-          <legend className="px-1 font-heading text-base font-bold text-foreground">Delivery address</legend>
-        <Field id="deliveryAddress" label="Street address">
+        <Field id="deliveryAddress" label="Delivery address">
           <Input
-            className="h-11"
             id="deliveryAddress"
             required
             value={info.deliveryAddress}
@@ -123,7 +114,6 @@ export default function CheckoutForm() {
         <div className="grid grid-cols-2 gap-4">
           <Field id="deliveryCity" label="City">
             <Input
-              className="h-11"
               id="deliveryCity"
               required
               value={info.deliveryCity}
@@ -132,7 +122,6 @@ export default function CheckoutForm() {
           </Field>
           <Field id="deliveryState" label="State">
             <Input
-              className="h-11"
               id="deliveryState"
               required
               value={info.deliveryState}
@@ -140,11 +129,10 @@ export default function CheckoutForm() {
             />
           </Field>
         </div>
-        </fieldset>
       </div>
 
-      <div className="h-fit rounded-xl border bg-surface p-6 lg:sticky lg:top-44">
-        <h2 className="font-heading text-base font-bold text-foreground">Order summary</h2>
+      <div className="h-fit rounded-2xl border p-5">
+        <h2 className="text-sm font-semibold text-foreground">Order summary</h2>
         <Separator className="my-4" />
         <div className="space-y-2">
           {lines.map((line) => (
@@ -161,11 +149,8 @@ export default function CheckoutForm() {
           <span className="text-foreground">{formatNaira(subtotal)}</span>
         </div>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-        <p className="mt-3 text-center text-xs text-muted-foreground">
-          You&apos;ll complete payment securely on Squad by GTCO. A receipt is emailed to you once it succeeds.
-        </p>
-        <Button type="submit" size="lg" className="mt-5 h-12 w-full text-sm font-semibold" disabled={submitting}>
-          {submitting ? "Starting payment…" : `Pay ${formatNaira(subtotal)} securely`}
+        <Button type="submit" className="mt-5 w-full" disabled={submitting}>
+          {submitting ? "Starting payment..." : "Pay with Squad"}
         </Button>
       </div>
     </form>

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Check, Minus, Plus, ShoppingBag } from "lucide-react";
+import { Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/lib/cart/CartProvider";
 import { BUY_NOW_STORAGE_KEY, type CartLine } from "@/lib/cart/types";
@@ -44,44 +44,25 @@ export default function AddToCartButtons({
   }
 
   return (
-    <div className="mt-5 space-y-3">
-      <div className="flex items-center gap-3">
-        <span className="text-sm font-medium text-foreground">Quantity</span>
-        <div className="flex w-fit items-center rounded-lg border">
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Decrease quantity"
-            onClick={() => setQty((q) => Math.max(1, q - 1))}
-          >
-            <Minus />
-          </Button>
-          <span className="w-10 text-center text-sm font-semibold tabular-nums" aria-live="polite">
-            {qty}
-          </span>
-          <Button variant="ghost" size="icon" aria-label="Increase quantity" onClick={() => setQty((q) => q + 1)}>
-            <Plus />
-          </Button>
-        </div>
-      </div>
-      <div className="grid gap-2.5 sm:grid-cols-2">
-        <Button size="lg" className="h-12 text-sm font-semibold" onClick={handleAddToCart}>
-          {added ? (
-            <>
-              <Check /> Added to cart
-            </>
-          ) : (
-            <>
-              <ShoppingBag /> Add to cart
-            </>
-          )}
-        </Button>
+    <div className="mt-6 space-y-3">
+      <div className="flex w-fit items-center gap-1 rounded-lg border">
         <Button
-          size="lg"
-          className="h-12 bg-ink text-sm font-semibold text-white hover:bg-ink-soft"
-          onClick={handleBuyNow}
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Decrease quantity"
+          onClick={() => setQty((q) => Math.max(1, q - 1))}
         >
-          Buy now
+          <Minus />
+        </Button>
+        <span className="w-8 text-center text-sm">{qty}</span>
+        <Button variant="ghost" size="icon-sm" aria-label="Increase quantity" onClick={() => setQty((q) => q + 1)}>
+          <Plus />
+        </Button>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={handleAddToCart}>{added ? "Added ✓" : "Add to Cart"}</Button>
+        <Button variant="outline" onClick={handleBuyNow}>
+          Buy Now
         </Button>
       </div>
     </div>

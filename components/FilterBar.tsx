@@ -17,15 +17,9 @@ function buildHref(base: Record<string, string | undefined>, overrides: Record<s
   return qs ? `/products?${qs}` : "/products";
 }
 
-const headingClass = "mb-3 text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase";
-const optionClass = (active: boolean) =>
-  `flex items-center rounded-md px-2 py-1.5 transition-colors ${
-    active ? "bg-primary/10 font-semibold text-primary" : "text-foreground/75 hover:bg-muted hover:text-foreground"
-  }`;
-
 function CheckboxLink({ href, active, label }: { href: string; active: boolean; label: ReactNode }) {
   return (
-    <Link href={href} className="flex items-center gap-2.5 rounded-md px-2 py-1 text-foreground/75 hover:text-foreground">
+    <Link href={href} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
       <span
         className={`flex size-4 shrink-0 items-center justify-center rounded border ${
           active ? "border-primary bg-primary text-primary-foreground" : "border-input"
@@ -59,14 +53,14 @@ export default function FilterBar({
   const current = { category: activeCategory, brand: activeBrand, size: activeSize, price: activePrice };
 
   return (
-    <div className="space-y-6">
+    <aside className="w-full shrink-0 space-y-6 lg:w-56">
       <div>
-        <h3 className={headingClass}>Category</h3>
-        <ul className="space-y-0.5 text-sm">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Category</h3>
+        <ul className="space-y-1 text-sm">
           <li>
             <Link
               href={buildHref(current, { category: undefined, size: undefined })}
-              className={optionClass(!activeCategory)}
+              className={`inline-flex items-center ${!activeCategory ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"}`}
             >
               All categories
               <LinkPendingHint />
@@ -79,7 +73,11 @@ export default function FilterBar({
                   category: category.slug,
                   size: SIZE_FILTER_CATEGORIES.includes(category.slug) ? activeSize : undefined,
                 })}
-                className={optionClass(activeCategory === category.slug)}
+                className={`inline-flex items-center ${
+                  activeCategory === category.slug
+                    ? "font-semibold text-primary"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
               >
                 {category.name}
                 <LinkPendingHint />
@@ -92,8 +90,8 @@ export default function FilterBar({
       <Separator />
 
       <div>
-        <h3 className={headingClass}>Price</h3>
-        <ul className="space-y-0.5 text-sm">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Price</h3>
+        <ul className="space-y-1.5 text-sm">
           {PRICE_BRACKETS.map((bracket) => {
             const isActive = activePrice === bracket.value;
             return (
@@ -112,12 +110,12 @@ export default function FilterBar({
       <Separator />
 
       <div>
-        <h3 className={headingClass}>Brand</h3>
-        <ul className="space-y-0.5 text-sm">
+        <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Brand</h3>
+        <ul className="space-y-1 text-sm">
           <li>
             <Link
               href={buildHref(current, { brand: undefined })}
-              className={optionClass(!activeBrand)}
+              className={`inline-flex items-center ${!activeBrand ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"}`}
             >
               All brands
               <LinkPendingHint />
@@ -127,7 +125,9 @@ export default function FilterBar({
             <li key={brand.id}>
               <Link
                 href={buildHref(current, { brand: brand.slug })}
-                className={optionClass(activeBrand === brand.slug)}
+                className={`inline-flex items-center ${
+                  activeBrand === brand.slug ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"
+                }`}
               >
                 {brand.name}
                 <LinkPendingHint />
@@ -141,8 +141,8 @@ export default function FilterBar({
         <>
           <Separator />
           <div>
-            <h3 className={headingClass}>Size</h3>
-            <ul className="space-y-0.5 text-sm">
+            <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Size</h3>
+            <ul className="space-y-1.5 text-sm">
               {sizes.map((size) => {
                 const isActive = activeSize === size.value;
                 return (
@@ -163,6 +163,6 @@ export default function FilterBar({
           </div>
         </>
       )}
-    </div>
+    </aside>
   );
 }

@@ -11,43 +11,42 @@ export default function ImageGallery({ images, productName }: { images: ProductI
 
   if (sorted.length === 0) {
     return (
-      <div className="flex aspect-square w-full items-center justify-center rounded-2xl border bg-surface text-sm text-muted-foreground">
+      <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-zinc-100 text-sm text-muted-foreground">
         No image available
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col-reverse gap-3 sm:flex-row">
+    <div className="flex flex-col gap-3">
+      <div className="relative aspect-square w-full overflow-hidden rounded-lg border bg-zinc-100">
+        <Image
+          src={active.url}
+          alt={productName}
+          fill
+          sizes="(min-width: 1024px) 40vw, 90vw"
+          className="object-contain p-6"
+          priority
+        />
+      </div>
+
       {sorted.length > 1 && (
-        <div className="no-scrollbar flex gap-2 overflow-x-auto sm:max-h-[36rem] sm:flex-col sm:overflow-y-auto">
+        <div className="flex gap-2 overflow-x-auto">
           {sorted.map((image, index) => (
             <button
               key={image.id}
               type="button"
               onClick={() => setActiveIndex(index)}
-              className={`relative size-16 shrink-0 overflow-hidden rounded-lg border-2 bg-surface transition-colors sm:size-20 ${
-                index === activeIndex ? "border-primary" : "border-transparent hover:border-border"
+              className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-md border bg-zinc-100 ${
+                index === activeIndex ? "border-primary" : ""
               }`}
               aria-label={`Show image ${index + 1}`}
-              aria-current={index === activeIndex}
             >
-              <Image src={image.url} alt="" fill sizes="80px" className="object-contain p-1.5 mix-blend-multiply" />
+              <Image src={image.url} alt="" fill sizes="64px" className="object-contain p-1" />
             </button>
           ))}
         </div>
       )}
-
-      <div className="relative aspect-square w-full flex-1 overflow-hidden rounded-2xl border bg-surface">
-        <Image
-          src={active.url}
-          alt={productName}
-          fill
-          sizes="(min-width: 1024px) 50vw, 95vw"
-          className="object-contain p-8 mix-blend-multiply sm:p-12"
-          priority
-        />
-      </div>
     </div>
   );
 }
