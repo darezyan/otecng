@@ -203,43 +203,58 @@ export async function getCategoryMenuData(
   return { brands, thumbnail };
 }
 
-// Refrigerator listings don't have a structured "size" column — capacity is
-// baked into the name (e.g. "LG Cross Door Refrigerator 570L (...)"). Extract
-// it from there rather than adding a schema column for one field.
-const REFRIGERATOR_SIZE_PATTERN = /\b(\d{2,4})L\b/;
+// Refrigerator/freezer listings don't have a structured "size" column —
+// capacity is baked into the name, either compact ("570L") or spelled out
+// ("219 Litres", "150 Ltrs" — common on Jumia-sourced Thermocool/Snowsea/
+// Bruhm listings). Extract it from there rather than adding a schema column.
+const SIZE_PATTERN = /\b(\d{2,4})\s*(?:litres?|ltrs?|l)\b/i;
 
 function extractLiters(name: string): number | null {
-  const match = REFRIGERATOR_SIZE_PATTERN.exec(name);
+  const match = SIZE_PATTERN.exec(name);
   return match ? Number(match[1]) : null;
 }
 
 // "min-max" or "min-" (open-ended), in liters — mirrors PRICE_BRACKETS.
-export const REFRIGERATOR_SIZE_BRACKETS: { value: string; label: string }[] = [
-  { value: "0-50", label: "Under 50L" },
-  { value: "50-200", label: "50L – 200L" },
-  { value: "200-400", label: "200L – 400L" },
-  { value: "400-600", label: "400L – 600L" },
-  { value: "600-", label: "600L and above" },
-];
+// Bracket boundaries are tuned per category to its actual size spread.
+const SIZE_BRACKETS_BY_CATEGORY: Record<string, { value: string; label: string }[]> = {
+  refrigerators: [
+    { value: "0-50", label: "Under 50L" },
+    { value: "50-200", label: "50L – 200L" },
+    { value: "200-400", label: "200L – 400L" },
+    { value: "400-600", label: "400L – 600L" },
+    { value: "600-", label: "600L and above" },
+  ],
+  freezers: [
+    { value: "0-150", label: "Under 150L" },
+    { value: "150-250", label: "150L – 250L" },
+    { value: "250-350", label: "250L – 350L" },
+    { value: "350-", label: "350L and above" },
+  ],
+};
+
+// Categories with a size filter, in the order their header dropdown /
+// sidebar section should check for it.
+export const SIZE_FILTER_CATEGORIES = Object.keys(SIZE_BRACKETS_BY_CATEGORY);
 
 export type SizeFacet = { value: string; label: string; count: number };
 
-export async function getRefrigeratorSizeFacets(): Promise<SizeFacet[]> {
+export async function getSizeFacets(categorySlug: string): Promise<SizeFacet[]> {
+  const brackets = SIZE_BRACKETS_BY_CATEGORY[categorySlug];
+  if (!brackets) return [];
+
   const supabase = createSupabaseClient();
-  const { data: category } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("slug", "refrigerators")
-    .maybeSingle();
+  const { data: category } = await supabase.from("categories").select("id").eq("slug", categorySlug).maybeSingle();
   if (!category) return [];
 
   const { data } = await supabase.from("products").select("name").eq("category_id", category.id);
   const liters = (data ?? []).map((row) => extractLiters(row.name as string));
 
-  return REFRIGERATOR_SIZE_BRACKETS.map((bracket) => ({
-    ...bracket,
-    count: liters.filter((l) => inBracket(l, bracket.value)).length,
-  })).filter((facet) => facet.count > 0);
+  return brackets
+    .map((bracket) => ({
+      ...bracket,
+      count: liters.filter((l) => inBracket(l, bracket.value)).length,
+    }))
+    .filter((facet) => facet.count > 0);
 }
 
 // One representative photo per category for the homepage hero collage —

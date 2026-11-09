@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getProductsByIds } from "@/lib/data/products";
 import { createPendingOrder } from "@/lib/data/orders";
-import { initializeTransaction } from "@/lib/paystack";
+import { initializeTransaction } from "@/lib/squad";
 
 type CheckoutBody = {
   customerName: string;
@@ -50,10 +50,10 @@ export async function POST(request: NextRequest) {
     }));
     const total = orderItems.reduce((sum, item) => sum + item.price * item.qty, 0);
 
-    const paystackReference = `otecng_${crypto.randomUUID()}`;
+    const paymentReference = `otecng_${crypto.randomUUID()}`;
 
     await createPendingOrder({
-      paystackReference,
+      paymentReference,
       total,
       customerName: body.customerName,
       customerEmail: body.customerEmail,
@@ -68,11 +68,12 @@ export async function POST(request: NextRequest) {
 
     const init = await initializeTransaction({
       email: body.customerEmail,
-      amountKobo: Math.round(total * 100), // Paystack amounts are in kobo
-      reference: paystackReference,
+      customerName: body.customerName,
+      amountKobo: Math.round(total * 100), // Squad amounts are in kobo, same as Paystack
+      reference: paymentReference,
       callbackUrl,
     });
-    return NextResponse.json({ redirectUrl: init.data.authorization_url });
+    return NextResponse.json({ redirectUrl: init.checkoutUrl });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to start checkout" },

@@ -150,7 +150,7 @@ export default function CheckoutForm() {
         </div>
         {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
         <Button type="submit" className="mt-5 w-full" disabled={submitting}>
-          {submitting ? "Starting payment..." : "Pay with Paystack"}
+          {submitting ? "Starting payment..." : "Pay with Squad"}
         </Button>
       </div>
     </form>

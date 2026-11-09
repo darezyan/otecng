@@ -43,7 +43,7 @@ export type OrderStatus = "pending" | "paid" | "failed" | "abandoned";
 export type Order = {
   id: string;
   status: OrderStatus;
-  paystack_reference: string;
+  payment_reference: string;
   total: number;
   currency: string;
   customer_name: string;

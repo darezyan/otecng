@@ -1,4 +1,4 @@
-import { getProducts, getCategories, getBrands, getRefrigeratorSizeFacets } from "@/lib/data/products";
+import { getProducts, getCategories, getBrands, getSizeFacets, SIZE_FILTER_CATEGORIES } from "@/lib/data/products";
 import { getPaginationRange } from "@/lib/pagination";
 import ProductGrid from "@/components/ProductGrid";
 import FilterBar from "@/components/FilterBar";
@@ -34,7 +34,9 @@ export default async function ProductsPage({
     }),
     getCategories(),
     getBrands(),
-    params.category === "refrigerators" ? getRefrigeratorSizeFacets() : Promise.resolve(undefined),
+    params.category && SIZE_FILTER_CATEGORIES.includes(params.category)
+      ? getSizeFacets(params.category)
+      : Promise.resolve(undefined),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(count / PAGE_SIZE));

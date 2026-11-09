@@ -20,7 +20,7 @@ const CATEGORIES = [
   { id: 5, slug: "tvs", name: "TVs" },
   { id: 9, slug: "audio", name: "Audio" },
   { id: 44, slug: "acs", name: "Air Conditioners" },
-  { id: 49, slug: "small-appliances-fans", name: "Small Appliances & Fans" },
+  { id: 49, slug: "small-appliances", name: "Small Appliances" },
   { id: 39, slug: "power-solution", name: "Power Solutions" },
   { id: 33, slug: "furniture", name: "Furniture" },
   { id: 177, slug: "cookers-microwave", name: "Cookers & Microwaves" },
@@ -45,6 +45,18 @@ function imageUrl(img: any): string | null {
   const file = img.webp_image || img.origin;
   if (!file) return null;
   return `${img.base_url}/${file}`;
+}
+
+// Fouani's category_id=49 bundles fans in with small appliances (blenders,
+// kettles, irons, etc.) on their own site — split fans out into their own
+// category on ours, matched by product name since Fouani gives no other signal.
+const FAN_PATTERN = /\bfan\b/i;
+
+function resolveCategory(categoryId: number, name: string, fallback: { slug: string; name: string }) {
+  if (categoryId === 49 && FAN_PATTERN.test(name)) {
+    return { slug: "fans", name: "Fans" };
+  }
+  return fallback;
 }
 
 // Fouani's raw description is markdown with a "Related PDFs" section linking
@@ -85,10 +97,11 @@ export async function fetchFouaniProducts(
           const price = Number(p.discounted_price) > 0 ? Number(p.discounted_price) : Number(p.price);
           if (!price) continue;
 
+          const { slug: categorySlug, name: categoryName } = resolveCategory(category.id, p.name, category);
           results.push({
             brandSlug: brand.slug,
-            categorySlug: category.slug,
-            categoryName: category.name,
+            categorySlug,
+            categoryName,
             name: p.name,
             price,
             description: cleanDescription(String(p.description ?? "")),

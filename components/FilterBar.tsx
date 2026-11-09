@@ -3,8 +3,9 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import type { Brand, Category } from "@/lib/supabase/types";
 import type { SizeFacet } from "@/lib/data/products";
-import { PRICE_BRACKETS } from "@/lib/data/products";
+import { PRICE_BRACKETS, SIZE_FILTER_CATEGORIES } from "@/lib/data/products";
 import { Separator } from "@/components/ui/separator";
+import LinkPendingHint from "@/components/LinkPendingHint";
 
 function buildHref(base: Record<string, string | undefined>, overrides: Record<string, string | undefined>) {
   const params = new URLSearchParams();
@@ -27,6 +28,7 @@ function CheckboxLink({ href, active, label }: { href: string; active: boolean; 
         {active && <Check className="size-3" />}
       </span>
       <span className={active ? "font-medium text-foreground" : undefined}>{label}</span>
+      <LinkPendingHint />
     </Link>
   );
 }
@@ -58,9 +60,10 @@ export default function FilterBar({
           <li>
             <Link
               href={buildHref(current, { category: undefined, size: undefined })}
-              className={!activeCategory ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"}
+              className={`inline-flex items-center ${!activeCategory ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"}`}
             >
               All categories
+              <LinkPendingHint />
             </Link>
           </li>
           {categories.map((category) => (
@@ -68,15 +71,16 @@ export default function FilterBar({
               <Link
                 href={buildHref(current, {
                   category: category.slug,
-                  size: category.slug === "refrigerators" ? activeSize : undefined,
+                  size: SIZE_FILTER_CATEGORIES.includes(category.slug) ? activeSize : undefined,
                 })}
-                className={
+                className={`inline-flex items-center ${
                   activeCategory === category.slug
                     ? "font-semibold text-primary"
                     : "text-muted-foreground hover:text-foreground"
-                }
+                }`}
               >
                 {category.name}
+                <LinkPendingHint />
               </Link>
             </li>
           ))}
@@ -111,27 +115,29 @@ export default function FilterBar({
           <li>
             <Link
               href={buildHref(current, { brand: undefined })}
-              className={!activeBrand ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"}
+              className={`inline-flex items-center ${!activeBrand ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"}`}
             >
               All brands
+              <LinkPendingHint />
             </Link>
           </li>
           {brands.map((brand) => (
             <li key={brand.id}>
               <Link
                 href={buildHref(current, { brand: brand.slug })}
-                className={
+                className={`inline-flex items-center ${
                   activeBrand === brand.slug ? "font-semibold text-primary" : "text-muted-foreground hover:text-foreground"
-                }
+                }`}
               >
                 {brand.name}
+                <LinkPendingHint />
               </Link>
             </li>
           ))}
         </ul>
       </div>
 
-      {activeCategory === "refrigerators" && sizes && sizes.length > 0 && (
+      {sizes && sizes.length > 0 && (
         <>
           <Separator />
           <div>
